@@ -1,0 +1,20 @@
+{
+  "name": "raditor-app",
+  "version": "0.0.0",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev:app": "pnpm --filter @raditor/app dev",
+    "build:app": "pnpm --filter @raditor/app build",
+    "test:app": "pnpm --filter @raditor/app test",
+    "typecheck:app": "pnpm --filter @raditor/app typecheck",
+    "gen:types": "pnpm --filter @raditor/app gen:types"
+  },
+  "devDependencies": {
+    "supabase": "^2.107.0"
+  }
+}

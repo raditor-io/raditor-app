@@ -1,0 +1,16 @@
+node_modules/
+.next/
+out/
+next-env.d.ts
+.DS_Store
+*.pem
+tsconfig.tsbuildinfo
+.turbo/
+
+# Local env files (templates are committed as .env.example)
+.env
+.env.*
+!.env.example
+
+# Supabase CLI state
+supabase/.temp/

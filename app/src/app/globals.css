@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-sora), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-shrikhand), serif;
+}
+
+@theme {
+  /*
+   * Neutral UI palette (Vercel-style): light gray canvas, white surfaces,
+   * gray hairline borders, near-black text. The Raditor orange stays as the
+   * signal color for primary actions and focus.
+   */
+  --color-background: #fafafa;
+  --color-surface: #ffffff;
+  --color-border: #eaeaea;
+  --color-border-strong: #d9d9d9;
+  --color-hover: #f2f2f2;
+  --color-foreground: #171717;
+  --color-muted: #666666;
+  --color-faint: #999999;
+  --color-accent: #e8703c;
+  --color-accent-deep: #b4542a;
+  --color-success: #297a3a;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+}
+
+/* Interactive controls always show the pointer (browsers/Tailwind preflight do not). */
+@layer base {
+  a,
+  button,
+  [role="button"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  select,
+  summary {
+    cursor: pointer;
+  }
+
+  :disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-surface);
+}

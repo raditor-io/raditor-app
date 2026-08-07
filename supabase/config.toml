@@ -1,0 +1,4 @@
+# Supabase CLI config for the Raditor platform app.
+# Linking to the right project (platform prod/dev) is handled by the monorepo
+# `sb` wrapper, which reads refs from ../.supabase-tokens.
+project_id = "raditor-app"
