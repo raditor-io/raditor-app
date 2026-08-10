@@ -20,6 +20,19 @@ export const metadata: Metadata = {
   description:
     "Raditor is an agentic CMS. Editor agents watch your sources for signals and propose content updates you review and ship.",
   robots: { index: false },
+  // Declared here rather than via app/icon.* file conventions: the exported
+  // favicon set ships fixed sizes plus a manifest whose icon srcs are
+  // root-relative, so every file lives at the public root and is linked
+  // explicitly (same approach as the landing site).
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "16x16 32x32", type: "image/x-icon" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
+  },
+  manifest: "/site.webmanifest",
 };
 
 export default function RootLayout({
