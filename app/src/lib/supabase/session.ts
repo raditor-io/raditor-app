@@ -9,7 +9,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/lib/database.types";
 
 /** Paths reachable without a session. */
-const PUBLIC_PATHS = ["/login", "/signup", "/auth", "/invite"];
+const PUBLIC_PATHS = ["/login", "/signup", "/auth", "/invite", "/github"];
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some(

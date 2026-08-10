@@ -21,7 +21,31 @@ const serverEnvSchema = z.object({
   // Supabase Auth "Send Email" hook secret (v1,whsec_...). Required for the
   // /api/auth/send-email endpoint that delivers OTP codes via Resend.
   SEND_EMAIL_HOOK_SECRET: z.string().optional(),
+  // GitHub App credentials (see docs/github-app-setup.md). Optional so the
+  // app boots without them; the GitHub routes fail loudly when missing.
+  GITHUB_APP_ID: z.string().optional(),
+  GITHUB_APP_SLUG: z.string().optional(),
+  GITHUB_APP_PRIVATE_KEY: z.string().optional(),
+  GITHUB_APP_WEBHOOK_SECRET: z.string().optional(),
+  // App-wide server secret: signs the GitHub connect state now, encrypts the
+  // BYOK vault in Phase 9. 32 bytes base64.
+  VAULT_MASTER_KEY: z.string().optional(),
+  // Bearer guard for /api/jobs/* and /api/cron/* (Phase 3).
+  CRON_SECRET: z.string().optional(),
 });
+
+/** Like serverEnv() but throws unless the named keys are present. */
+export function requireEnv<K extends keyof ServerEnv>(
+  ...keys: K[]
+): { [P in K]: NonNullable<ServerEnv[P]> } {
+  const env = serverEnv();
+  for (const key of keys) {
+    if (!env[key]) {
+      throw new Error(`Missing required environment variable: ${key}`);
+    }
+  }
+  return env as { [P in K]: NonNullable<ServerEnv[P]> };
+}
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
 

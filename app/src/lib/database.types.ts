@@ -39,6 +39,90 @@ export type Database = {
   }
   public: {
     Tables: {
+      editor_agent_assignments: {
+        Row: {
+          created_at: string
+          editor_agent_id: string
+          id: string
+          organization_id: string
+          project_id: string
+        }
+        Insert: {
+          created_at?: string
+          editor_agent_id: string
+          id?: string
+          organization_id: string
+          project_id: string
+        }
+        Update: {
+          created_at?: string
+          editor_agent_id?: string
+          id?: string
+          organization_id?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "editor_agent_assignments_editor_agent_id_fkey"
+            columns: ["editor_agent_id"]
+            isOneToOne: false
+            referencedRelation: "editor_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "editor_agent_assignments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "editor_agent_assignments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      editor_agents: {
+        Row: {
+          created_at: string
+          display_name: string
+          id: string
+          model_config: Json
+          organization_id: string
+          persona_md: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          id?: string
+          model_config?: Json
+          organization_id: string
+          persona_md?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          id?: string
+          model_config?: Json
+          organization_id?: string
+          persona_md?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "editor_agents_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           actor_id: string | null
@@ -76,6 +160,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      github_installations: {
+        Row: {
+          created_at: string
+          github_account_login: string
+          github_account_type: string
+          github_installation_id: number
+          id: string
+          is_active: boolean
+          organization_id: string
+          suspended_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          github_account_login: string
+          github_account_type?: string
+          github_installation_id: number
+          id?: string
+          is_active?: boolean
+          organization_id: string
+          suspended_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          github_account_login?: string
+          github_account_type?: string
+          github_installation_id?: number
+          id?: string
+          is_active?: boolean
+          organization_id?: string
+          suspended_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "github_installations_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -191,6 +319,284 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      project_goals: {
+        Row: {
+          body_md: string
+          created_at: string
+          goal_key: string | null
+          id: string
+          is_active: boolean
+          organization_id: string
+          priority: number
+          project_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body_md?: string
+          created_at?: string
+          goal_key?: string | null
+          id?: string
+          is_active?: boolean
+          organization_id: string
+          priority?: number
+          project_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body_md?: string
+          created_at?: string
+          goal_key?: string | null
+          id?: string
+          is_active?: boolean
+          organization_id?: string
+          priority?: number
+          project_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_goals_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_goals_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_sources: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          project_id: string
+          source_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          project_id: string
+          source_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          project_id?: string
+          source_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_sources_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_sources_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_sources_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          created_at: string
+          deploy_base_branch: string
+          deploy_github_installation_id: number | null
+          deploy_path_allowlist: string[]
+          deploy_pr_mode: string
+          deploy_repo_full_name: string | null
+          display_name: string
+          do_not_write_md: string
+          editorial_memory_md: string
+          i18n_config: Json
+          id: string
+          max_suggestions_per_interval: number
+          organization_id: string
+          purpose_md: string
+          site_type: string
+          slug: string
+          suggestion_interval: string
+          updated_at: string
+          url_mapping_config: Json
+        }
+        Insert: {
+          created_at?: string
+          deploy_base_branch?: string
+          deploy_github_installation_id?: number | null
+          deploy_path_allowlist?: string[]
+          deploy_pr_mode?: string
+          deploy_repo_full_name?: string | null
+          display_name: string
+          do_not_write_md?: string
+          editorial_memory_md?: string
+          i18n_config?: Json
+          id?: string
+          max_suggestions_per_interval?: number
+          organization_id: string
+          purpose_md?: string
+          site_type?: string
+          slug: string
+          suggestion_interval?: string
+          updated_at?: string
+          url_mapping_config?: Json
+        }
+        Update: {
+          created_at?: string
+          deploy_base_branch?: string
+          deploy_github_installation_id?: number | null
+          deploy_path_allowlist?: string[]
+          deploy_pr_mode?: string
+          deploy_repo_full_name?: string | null
+          display_name?: string
+          do_not_write_md?: string
+          editorial_memory_md?: string
+          i18n_config?: Json
+          id?: string
+          max_suggestions_per_interval?: number
+          organization_id?: string
+          purpose_md?: string
+          site_type?: string
+          slug?: string
+          suggestion_interval?: string
+          updated_at?: string
+          url_mapping_config?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      source_events: {
+        Row: {
+          created_at: string
+          event_kind: string
+          external_ref: string
+          github_delivery_id: string | null
+          id: string
+          is_processed: boolean
+          occurred_at: string
+          organization_id: string
+          payload: Json
+          signal_id: string | null
+          source_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_kind: string
+          external_ref: string
+          github_delivery_id?: string | null
+          id?: string
+          is_processed?: boolean
+          occurred_at?: string
+          organization_id: string
+          payload?: Json
+          signal_id?: string | null
+          source_id: string
+        }
+        Update: {
+          created_at?: string
+          event_kind?: string
+          external_ref?: string
+          github_delivery_id?: string | null
+          id?: string
+          is_processed?: boolean
+          occurred_at?: string
+          organization_id?: string
+          payload?: Json
+          signal_id?: string | null
+          source_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "source_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_events_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sources: {
+        Row: {
+          created_at: string
+          display_name: string
+          github_installation_id: number | null
+          github_repo_full_name: string | null
+          id: string
+          is_active: boolean
+          organization_id: string
+          source_type: string
+          updated_at: string
+          watch_config: Json
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          github_installation_id?: number | null
+          github_repo_full_name?: string | null
+          id?: string
+          is_active?: boolean
+          organization_id: string
+          source_type?: string
+          updated_at?: string
+          watch_config?: Json
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          github_installation_id?: number | null
+          github_repo_full_name?: string | null
+          id?: string
+          is_active?: boolean
+          organization_id?: string
+          source_type?: string
+          updated_at?: string
+          watch_config?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sources_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

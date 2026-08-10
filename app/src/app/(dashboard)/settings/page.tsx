@@ -10,8 +10,8 @@ export default async function SettingsPage() {
   return (
     <div>
       <div className="max-w-2xl space-y-4">
-        <section className="rounded-lg border border-border bg-surface p-5">
-          <h2 className="text-sm font-medium text-foreground">Organization</h2>
+        <section className="rounded-lg border border-border bg-surface p-6">
+          <h2 className="text-base font-semibold text-foreground">Organization</h2>
           <dl className="mt-3 space-y-1 text-sm">
             <div className="flex gap-2">
               <dt className="text-faint">Name:</dt>
@@ -32,11 +32,11 @@ export default async function SettingsPage() {
           </dl>
         </section>
 
-        <section className="rounded-lg border border-border bg-surface p-5">
-          <h2 className="text-sm font-medium text-foreground">Members</h2>
+        <section className="rounded-lg border border-border bg-surface p-6">
+          <h2 className="text-base font-semibold text-foreground">Members</h2>
           <p className="mt-2 text-sm text-muted">
-            Invite teammates and manage roles. Admins configure websites,
-            sources, and agents; users review and approve content.
+            Invite teammates and manage roles. Admins configure projects,
+            sources, and editors; users review and approve content.
           </p>
           <Link
             href="/settings/members"

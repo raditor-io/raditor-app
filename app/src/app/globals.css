@@ -47,6 +47,15 @@ body {
   [aria-disabled="true"] {
     cursor: not-allowed;
   }
+
+  /* Replace the browser's bold black focus ring with a subtle brand ring.
+     Only :focus-visible (keyboard navigation), so mouse clicks stay clean. */
+  :focus-visible {
+    outline: 2px solid
+      color-mix(in srgb, var(--color-accent) 55%, transparent);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
 }
 
 ::selection {

@@ -23,13 +23,13 @@ export default async function MembersPage() {
   return (
     <div className="max-w-3xl">
       <p className="text-sm text-muted">
-        Admins configure websites, sources, and agents. Users review and
+        Admins configure projects, sources, and editors. Users review and
         approve content.
       </p>
 
       {ctx.isAdmin ? (
-        <section className="mt-4 rounded-lg border border-border bg-surface p-5">
-          <h2 className="text-sm font-medium text-foreground">
+        <section className="mt-4 rounded-lg border border-border bg-surface p-6">
+          <h2 className="text-base font-semibold text-foreground">
             Invite a teammate
           </h2>
           <div className="mt-3">

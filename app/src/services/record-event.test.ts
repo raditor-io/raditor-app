@@ -6,8 +6,8 @@ describe("buildEventRow", () => {
   it("maps camelCase input to snake_case columns", () => {
     const row = buildEventRow({
       organizationId: "org-1",
-      eventType: "website_created",
-      subjectType: "website",
+      eventType: "project_created",
+      subjectType: "project",
       subjectId: "site-1",
       actorKind: "user",
       actorId: "user-1",
@@ -15,8 +15,8 @@ describe("buildEventRow", () => {
     });
     expect(row).toEqual({
       organization_id: "org-1",
-      event_type: "website_created",
-      subject_type: "website",
+      event_type: "project_created",
+      subject_type: "project",
       subject_id: "site-1",
       actor_kind: "user",
       actor_id: "user-1",

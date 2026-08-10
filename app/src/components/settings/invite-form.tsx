@@ -36,7 +36,7 @@ export function InviteForm() {
         <button
           type="submit"
           disabled={isPending}
-          className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent-deep disabled:opacity-50"
+          className="rounded-md bg-accent px-3.5 py-1.5 text-sm font-medium text-white hover:bg-accent-deep disabled:opacity-50"
         >
           {isPending ? "Inviting..." : "Invite"}
         </button>

@@ -37,7 +37,7 @@ ESLint/Prettier by convention; the type checker and tests are the gate.
   (`/api/jobs/drain`) triggered by Vercel cron; never add a separate worker
   process. Job handlers must be idempotent (upsert by natural keys).
 - **Roles**: organizations are multi-user. `admin` = configuration changes
-  (websites, sources, agents, policies, members, keys); `user` = operational
+  (projects, sources, editors, policies, members, keys); `user` = operational
   tasks (review/accept/dismiss suggestions, elaboration, feedback). Enforce in
   RLS (`is_org_member` / `is_org_admin`) AND in the service layer.
 - **RLS everywhere**: every table carries `organization_id`, default-deny.
