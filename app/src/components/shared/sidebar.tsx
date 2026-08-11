@@ -21,7 +21,7 @@ import { activeProjectId } from "@/components/shared/build-crumbs";
 const ORG_ITEMS = [
   { href: "/", label: "Projects", icon: IconLayoutGrid },
   { href: "/content", label: "Content", icon: IconFileText },
-  { href: "/radar", label: "Radar", icon: IconRadar2 },
+  { href: "/radar", label: "Radars", icon: IconRadar2 },
   { href: "/editors", label: "Editors", icon: IconUserHexagon },
   { href: "/settings", label: "Settings", icon: IconSettings },
 ] as const;
@@ -31,7 +31,7 @@ function projectItems(projectId: string) {
   return [
     { href: base, label: "Overview", icon: IconLayoutDashboard },
     { href: `${base}/content`, label: "Content", icon: IconFileText },
-    { href: `${base}/radar`, label: "Radar", icon: IconRadar2 },
+    { href: `${base}/radar`, label: "Radars", icon: IconRadar2 },
     { href: `${base}/editors`, label: "Editors", icon: IconUserHexagon },
     { href: `${base}/settings`, label: "Settings", icon: IconSettings },
   ] as const;

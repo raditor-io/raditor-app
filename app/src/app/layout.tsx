@@ -18,7 +18,7 @@ const shrikhand = Shrikhand({
 export const metadata: Metadata = {
   title: "Raditor",
   description:
-    "Raditor is an agentic CMS. Editor agents watch your sources for signals and propose content updates you review and ship.",
+    "Raditor is an agentic CMS. Editor agents watch for signals and propose content updates you review and ship.",
   robots: { index: false },
   // Declared here rather than via app/icon.* file conventions: the exported
   // favicon set ships fixed sizes plus a manifest whose icon srcs are

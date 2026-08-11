@@ -32,6 +32,8 @@ const serverEnvSchema = z.object({
   VAULT_MASTER_KEY: z.string().optional(),
   // Bearer guard for /api/jobs/* and /api/cron/* (Phase 3).
   CRON_SECRET: z.string().optional(),
+  // Venice.ai platform key (BYOK org keys take precedence from Phase 9).
+  VENICE_API_KEY: z.string().optional(),
 });
 
 /** Like serverEnv() but throws unless the named keys are present. */

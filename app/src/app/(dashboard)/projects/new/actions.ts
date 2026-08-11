@@ -6,7 +6,7 @@ import { z } from "zod";
 import type { ActionResult } from "@/components/shared/action-form";
 import { SITE_TYPES, watchConfigSchema } from "@/lib/schemas/project-config";
 import { createProject } from "@/services/project";
-import { ensureSource, setSubscription } from "@/services/source";
+import { createRadar } from "@/services/radar";
 
 const createSchema = z.object({
   display_name: z.string().min(1).max(120),
@@ -51,15 +51,20 @@ export async function createProjectAction(
     });
     projectId = project.id;
 
-    // Default wiring for the hero loop: the deploy repo is also watched as a
-    // source and subscribed. Adjustable later in project settings.
+    // Default wiring for the hero loop: the deploy repo gets a seeded radar
+    // watching it. Adjustable later in the project's Radar tab.
     if (repo) {
-      const sourceId = await ensureSource({
-        githubInstallationId: repo.installationId,
-        repoFullName: repo.fullName,
-        watchConfig: watchConfigSchema.parse({}),
+      await createRadar({
+        projectId,
+        name: `${repo.fullName} radar`,
+        directiveMd: `Watch the GitHub repository ${repo.fullName} for releases, merged changes, and labeled issues relevant to this project.`,
+        scanStrategies: ["target_emitted_events"],
+        repoTarget: {
+          githubInstallationId: repo.installationId,
+          repoFullName: repo.fullName,
+          watchConfig: watchConfigSchema.parse({}),
+        },
       });
-      await setSubscription(projectId, sourceId, true);
     }
   } catch (err) {
     return {

@@ -3,7 +3,8 @@ import Link from "next/link";
 
 import { listAssignedEditorIds } from "@/services/editor";
 import { getProject } from "@/services/project";
-import { listSubscribedSourceIds } from "@/services/source";
+import { listRadars } from "@/services/radar";
+import { listSuggestions } from "@/services/suggestion";
 
 export const metadata = { title: "Overview | Raditor" };
 
@@ -16,16 +17,17 @@ export default async function ProjectOverviewPage({
   const project = await getProject(id);
   if (!project) return null;
 
-  const [sourceIds, editorIds] = await Promise.all([
-    listSubscribedSourceIds(id),
+  const [radars, editorIds, openSuggestions] = await Promise.all([
+    listRadars(id),
     listAssignedEditorIds(id),
+    listSuggestions({ projectId: id, statuses: ["open", "elaborated"] }),
   ]);
 
   return (
     <div className="max-w-3xl">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard label="Open suggestions" value="0" />
-        <StatCard label="Subscribed sources" value={String(sourceIds.length)} />
+        <StatCard label="Open suggestions" value={String(openSuggestions.length)} />
+        <StatCard label="Radars" value={String(radars.length)} />
         <StatCard label="Assigned editors" value={String(editorIds.length)} />
       </div>
 
@@ -57,19 +59,19 @@ export default async function ProjectOverviewPage({
         </p>
       </section>
 
-      {sourceIds.length === 0 || editorIds.length === 0 ? (
+      {radars.length === 0 || editorIds.length === 0 ? (
         <section className="mt-4 rounded-lg border border-dashed border-border-strong bg-surface p-5 text-sm text-muted">
           <p className="font-medium text-foreground">Finish the setup:</p>
           <ul className="mt-2 list-inside list-disc space-y-1">
-            {sourceIds.length === 0 ? (
+            {radars.length === 0 ? (
               <li>
                 <Link
-                  href={`/projects/${id}/settings`}
+                  href={`/projects/${id}/radar`}
                   className="text-accent hover:underline"
                 >
-                  Subscribe a source
+                  Create a radar
                 </Link>{" "}
-                so the radar has something to watch.
+                so there is something watching your sources.
               </li>
             ) : null}
             {editorIds.length === 0 ? (

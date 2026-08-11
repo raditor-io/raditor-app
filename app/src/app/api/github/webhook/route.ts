@@ -1,7 +1,7 @@
 /**
  * GitHub App webhook receiver. Cheap and synchronous: verify the signature,
  * keep installation state in sync, and normalize watched source events into
- * source_events rows (no AI here — the radar picks them up on its tick).
+ * radar_target_events inbox rows (no AI here — scans interpret the inbox).
  *
  * Returns 2xx fast so GitHub does not retry; signature failures 401.
  */
@@ -11,6 +11,7 @@ import { verifyGithubSignature } from "@/github/webhook-verify";
 import type { Json } from "@/lib/database.types";
 import { requireEnv } from "@/lib/env";
 import { adminClient } from "@/lib/supabase/server";
+import { enqueueJob } from "@/jobs/queue";
 import {
   normalizeGithubEvent,
   type WatchConfig,
@@ -46,7 +47,10 @@ export async function POST(request: NextRequest) {
     } else if (eventName === "installation_repositories") {
       await handleInstallationRepositories(payload);
     } else {
-      await handleSourceEvent(eventName, payload, deliveryId);
+      if (eventName === "pull_request") {
+        await trackRaditorPullRequest(payload);
+      }
+      await handleTargetEvent(eventName, payload, deliveryId);
     }
   } catch (err) {
     // Log but acknowledge: GitHub redelivery would not fix an internal bug,
@@ -116,7 +120,7 @@ async function handleInstallationRepositories(payload: AnyPayload) {
   if (fullNames.length === 0) return;
 
   await admin
-    .from("sources")
+    .from("radar_targets")
     .update({ is_active: false })
     .eq("organization_id", row.organization_id)
     .in("github_repo_full_name", fullNames);
@@ -131,7 +135,49 @@ async function handleInstallationRepositories(payload: AnyPayload) {
   });
 }
 
-async function handleSourceEvent(
+/** Track merge/close of PRs Raditor itself opened (github_pull_requests). */
+async function trackRaditorPullRequest(payload: AnyPayload) {
+  if (payload.action !== "closed") return;
+  const repoFullName: string | undefined = payload.repository?.full_name;
+  const prNumber: number | undefined = payload.pull_request?.number;
+  if (!repoFullName || !prNumber) return;
+
+  const admin = adminClient();
+  const { data: tracked } = await admin
+    .from("github_pull_requests")
+    .select("id, organization_id, suggestion_id")
+    .eq("repo_full_name", repoFullName)
+    .eq("pr_number", prNumber)
+    .maybeSingle();
+  if (!tracked) return;
+
+  const isMerged = Boolean(payload.pull_request?.merged);
+  await admin
+    .from("github_pull_requests")
+    .update(
+      isMerged
+        ? { status: "merged", merged_at: new Date().toISOString() }
+        : { status: "closed", closed_at: new Date().toISOString() },
+    )
+    .eq("id", tracked.id);
+
+  await recordEvent({
+    organizationId: tracked.organization_id,
+    eventType: isMerged ? "pull_request_merged" : "pull_request_closed",
+    subjectType: "suggestion",
+    subjectId: tracked.suggestion_id,
+    actorKind: "user",
+    payload: { repo: repoFullName, pr_number: prNumber },
+  });
+}
+
+/**
+ * Deliveries route to radar_targets (the emitters' addresses inside radars);
+ * matched events land in the radar_target_events inbox mechanically. A
+ * debounce-light event-triggered scan is enqueued per affected radar — the
+ * scan is the interpretation stage, never this receiver.
+ */
+async function handleTargetEvent(
   eventName: string,
   payload: AnyPayload,
   deliveryId: string | null,
@@ -148,36 +194,54 @@ async function handleSourceEvent(
     .maybeSingle();
   if (!installation?.is_active) return;
 
-  const { data: sources } = await admin
-    .from("sources")
-    .select("id, watch_config")
+  const { data: targets } = await admin
+    .from("radar_targets")
+    .select("id, radar_id, config, radars!inner(id, is_active, scan_strategies)")
     .eq("organization_id", installation.organization_id)
+    .eq("github_installation_id", installationId)
     .eq("github_repo_full_name", repoFullName)
     .eq("is_active", true);
-  if (!sources || sources.length === 0) return;
+  if (!targets || targets.length === 0) return;
 
-  for (const source of sources) {
+  for (const target of targets) {
+    const radar = target.radars as unknown as {
+      id: string;
+      is_active: boolean;
+      scan_strategies: string[];
+    };
+    if (!radar.is_active) continue;
+    if (!radar.scan_strategies.includes("target_emitted_events")) continue;
+
     const normalized = normalizeGithubEvent(
       eventName,
       payload,
-      (source.watch_config ?? {}) as WatchConfig,
+      (target.config ?? {}) as WatchConfig,
     );
     if (!normalized) continue;
 
-    const { error } = await admin.from("source_events").upsert(
+    const { error } = await admin.from("radar_target_events").upsert(
       {
         organization_id: installation.organization_id,
-        source_id: source.id,
+        radar_id: target.radar_id,
+        radar_target_id: target.id,
         event_kind: normalized.eventKind,
         external_ref: normalized.externalRef,
-        github_delivery_id: deliveryId,
+        delivery_ref: deliveryId,
         payload: normalized.payload as Json,
         occurred_at: normalized.occurredAt,
       },
-      { onConflict: "source_id,external_ref", ignoreDuplicates: true },
+      { onConflict: "radar_target_id,external_ref", ignoreDuplicates: true },
     );
     if (error) {
-      console.error("[github-webhook] source_event insert failed:", error);
+      console.error("[github-webhook] inbox insert failed:", error);
+      continue;
     }
+
+    // Debounce-light: the scan exits immediately when a prior scan already
+    // consumed the inbox, so redundant enqueues are cheap no-ops.
+    await enqueueJob("radar", "run_scan", {
+      radarId: target.radar_id,
+      trigger: "target_events",
+    });
   }
 }

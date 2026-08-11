@@ -3,7 +3,7 @@ import { ActionForm } from "@/components/shared/action-form";
 import { INPUT_CLASSES, LABEL_CLASSES } from "@/components/shared/form-styles";
 import { SITE_TYPES } from "@/lib/schemas/project-config";
 import { requireOrgContext } from "@/services/org";
-import { listAvailableRepos } from "@/services/source";
+import { listAvailableRepos } from "@/services/radar";
 
 import { createProjectAction } from "./actions";
 

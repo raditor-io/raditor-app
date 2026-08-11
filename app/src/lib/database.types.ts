@@ -39,6 +39,147 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_usage_events: {
+        Row: {
+          created_at: string
+          editor_agent_id: string | null
+          estimated_cost_usd: number
+          functionality: string
+          id: string
+          input_tokens: number
+          is_byok: boolean
+          model: string
+          organization_id: string
+          output_tokens: number
+          project_id: string | null
+          provider: string
+          scan_id: string | null
+          suggestion_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          editor_agent_id?: string | null
+          estimated_cost_usd?: number
+          functionality: string
+          id?: string
+          input_tokens?: number
+          is_byok?: boolean
+          model: string
+          organization_id: string
+          output_tokens?: number
+          project_id?: string | null
+          provider?: string
+          scan_id?: string | null
+          suggestion_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          editor_agent_id?: string | null
+          estimated_cost_usd?: number
+          functionality?: string
+          id?: string
+          input_tokens?: number
+          is_byok?: boolean
+          model?: string
+          organization_id?: string
+          output_tokens?: number
+          project_id?: string | null
+          provider?: string
+          scan_id?: string | null
+          suggestion_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_events_editor_agent_id_fkey"
+            columns: ["editor_agent_id"]
+            isOneToOne: false
+            referencedRelation: "editor_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_usage_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_usage_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_usage_events_suggestion_id_fkey"
+            columns: ["suggestion_id"]
+            isOneToOne: false
+            referencedRelation: "suggestions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_drafts: {
+        Row: {
+          base_git_blob_sha: string | null
+          committed_git_blob_sha: string | null
+          created_at: string
+          draft_content: string
+          file_path: string
+          id: string
+          organization_id: string
+          project_id: string
+          suggestion_id: string
+          updated_at: string
+        }
+        Insert: {
+          base_git_blob_sha?: string | null
+          committed_git_blob_sha?: string | null
+          created_at?: string
+          draft_content?: string
+          file_path: string
+          id?: string
+          organization_id: string
+          project_id: string
+          suggestion_id: string
+          updated_at?: string
+        }
+        Update: {
+          base_git_blob_sha?: string | null
+          committed_git_blob_sha?: string | null
+          created_at?: string
+          draft_content?: string
+          file_path?: string
+          id?: string
+          organization_id?: string
+          project_id?: string
+          suggestion_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_drafts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_drafts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_drafts_suggestion_id_fkey"
+            columns: ["suggestion_id"]
+            isOneToOne: false
+            referencedRelation: "suggestions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       editor_agent_assignments: {
         Row: {
           created_at: string
@@ -211,6 +352,112 @@ export type Database = {
           },
         ]
       }
+      github_pull_requests: {
+        Row: {
+          branch_name: string
+          closed_at: string | null
+          created_at: string
+          head_commit_sha: string | null
+          id: string
+          is_from_fork: boolean
+          merged_at: string | null
+          opened_at: string
+          organization_id: string
+          pr_number: number
+          project_id: string
+          repo_full_name: string
+          status: string
+          suggestion_id: string
+          updated_at: string
+        }
+        Insert: {
+          branch_name: string
+          closed_at?: string | null
+          created_at?: string
+          head_commit_sha?: string | null
+          id?: string
+          is_from_fork?: boolean
+          merged_at?: string | null
+          opened_at?: string
+          organization_id: string
+          pr_number: number
+          project_id: string
+          repo_full_name: string
+          status?: string
+          suggestion_id: string
+          updated_at?: string
+        }
+        Update: {
+          branch_name?: string
+          closed_at?: string | null
+          created_at?: string
+          head_commit_sha?: string | null
+          id?: string
+          is_from_fork?: boolean
+          merged_at?: string | null
+          opened_at?: string
+          organization_id?: string
+          pr_number?: number
+          project_id?: string
+          repo_full_name?: string
+          status?: string
+          suggestion_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "github_pull_requests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "github_pull_requests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "github_pull_requests_suggestion_id_fkey"
+            columns: ["suggestion_id"]
+            isOneToOne: false
+            referencedRelation: "suggestions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_failures: {
+        Row: {
+          attempt_count: number
+          error_message: string | null
+          failed_at: string
+          id: string
+          job_name: string
+          payload: Json
+          queue_name: string
+        }
+        Insert: {
+          attempt_count?: number
+          error_message?: string | null
+          failed_at?: string
+          id?: string
+          job_name: string
+          payload?: Json
+          queue_name: string
+        }
+        Update: {
+          attempt_count?: number
+          error_message?: string | null
+          failed_at?: string
+          id?: string
+          job_name?: string
+          payload?: Json
+          queue_name?: string
+        }
+        Relationships: []
+      }
       organization_invitations: {
         Row: {
           accepted_at: string | null
@@ -301,6 +548,7 @@ export type Database = {
           created_at: string
           display_name: string
           id: string
+          model_routing: Json
           slug: string
           updated_at: string
         }
@@ -308,6 +556,7 @@ export type Database = {
           created_at?: string
           display_name: string
           id?: string
+          model_routing?: Json
           slug: string
           updated_at?: string
         }
@@ -315,6 +564,7 @@ export type Database = {
           created_at?: string
           display_name?: string
           id?: string
+          model_routing?: Json
           slug?: string
           updated_at?: string
         }
@@ -370,52 +620,6 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      project_sources: {
-        Row: {
-          created_at: string
-          id: string
-          organization_id: string
-          project_id: string
-          source_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          organization_id: string
-          project_id: string
-          source_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          organization_id?: string
-          project_id?: string
-          source_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "project_sources_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "project_sources_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "project_sources_source_id_fkey"
-            columns: ["source_id"]
-            isOneToOne: false
-            referencedRelation: "sources"
             referencedColumns: ["id"]
           },
         ]
@@ -494,106 +698,594 @@ export type Database = {
           },
         ]
       }
-      source_events: {
+      provider_credentials: {
         Row: {
           created_at: string
-          event_kind: string
-          external_ref: string
-          github_delivery_id: string | null
+          created_by: string | null
           id: string
-          is_processed: boolean
-          occurred_at: string
+          key_ciphertext: string
+          key_iv: string
+          key_last_four: string
           organization_id: string
-          payload: Json
-          signal_id: string | null
-          source_id: string
+          provider: string
+          updated_at: string
         }
         Insert: {
           created_at?: string
-          event_kind: string
-          external_ref: string
-          github_delivery_id?: string | null
+          created_by?: string | null
           id?: string
-          is_processed?: boolean
-          occurred_at?: string
+          key_ciphertext: string
+          key_iv: string
+          key_last_four: string
           organization_id: string
-          payload?: Json
-          signal_id?: string | null
-          source_id: string
+          provider?: string
+          updated_at?: string
         }
         Update: {
           created_at?: string
-          event_kind?: string
-          external_ref?: string
-          github_delivery_id?: string | null
+          created_by?: string | null
           id?: string
-          is_processed?: boolean
-          occurred_at?: string
+          key_ciphertext?: string
+          key_iv?: string
+          key_last_four?: string
           organization_id?: string
-          payload?: Json
-          signal_id?: string | null
-          source_id?: string
+          provider?: string
+          updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "source_events_organization_id_fkey"
+            foreignKeyName: "provider_credentials_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      radar_target_events: {
+        Row: {
+          consumed_by_scan_id: string | null
+          delivery_ref: string | null
+          event_kind: string
+          external_ref: string
+          id: string
+          occurred_at: string
+          organization_id: string
+          payload: Json
+          radar_id: string
+          radar_target_id: string
+          received_at: string
+        }
+        Insert: {
+          consumed_by_scan_id?: string | null
+          delivery_ref?: string | null
+          event_kind: string
+          external_ref: string
+          id?: string
+          occurred_at?: string
+          organization_id: string
+          payload?: Json
+          radar_id: string
+          radar_target_id: string
+          received_at?: string
+        }
+        Update: {
+          consumed_by_scan_id?: string | null
+          delivery_ref?: string | null
+          event_kind?: string
+          external_ref?: string
+          id?: string
+          occurred_at?: string
+          organization_id?: string
+          payload?: Json
+          radar_id?: string
+          radar_target_id?: string
+          received_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "radar_target_events_consumed_fk"
+            columns: ["consumed_by_scan_id"]
+            isOneToOne: false
+            referencedRelation: "scans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "radar_target_events_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "source_events_source_id_fkey"
-            columns: ["source_id"]
+            foreignKeyName: "radar_target_events_radar_id_fkey"
+            columns: ["radar_id"]
             isOneToOne: false
-            referencedRelation: "sources"
+            referencedRelation: "radars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "radar_target_events_radar_target_id_fkey"
+            columns: ["radar_target_id"]
+            isOneToOne: false
+            referencedRelation: "radar_targets"
             referencedColumns: ["id"]
           },
         ]
       }
-      sources: {
+      radar_targets: {
         Row: {
+          config: Json
           created_at: string
-          display_name: string
           github_installation_id: number | null
           github_repo_full_name: string | null
           id: string
           is_active: boolean
           organization_id: string
-          source_type: string
+          radar_id: string
+          scan_checkpoint: Json | null
+          target_kind: string
           updated_at: string
-          watch_config: Json
         }
         Insert: {
+          config?: Json
           created_at?: string
-          display_name: string
           github_installation_id?: number | null
           github_repo_full_name?: string | null
           id?: string
           is_active?: boolean
           organization_id: string
-          source_type?: string
+          radar_id: string
+          scan_checkpoint?: Json | null
+          target_kind: string
           updated_at?: string
-          watch_config?: Json
         }
         Update: {
+          config?: Json
           created_at?: string
-          display_name?: string
           github_installation_id?: number | null
           github_repo_full_name?: string | null
           id?: string
           is_active?: boolean
           organization_id?: string
-          source_type?: string
+          radar_id?: string
+          scan_checkpoint?: Json | null
+          target_kind?: string
           updated_at?: string
-          watch_config?: Json
         }
         Relationships: [
           {
-            foreignKeyName: "sources_organization_id_fkey"
+            foreignKeyName: "radar_targets_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "radar_targets_radar_id_fkey"
+            columns: ["radar_id"]
+            isOneToOne: false
+            referencedRelation: "radars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      radars: {
+        Row: {
+          created_at: string
+          directive_md: string
+          id: string
+          is_active: boolean
+          last_scanned_at: string | null
+          name: string
+          organization_id: string
+          project_id: string
+          scan_interval_minutes: number
+          scan_strategies: string[]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          directive_md?: string
+          id?: string
+          is_active?: boolean
+          last_scanned_at?: string | null
+          name: string
+          organization_id: string
+          project_id: string
+          scan_interval_minutes?: number
+          scan_strategies?: string[]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          directive_md?: string
+          id?: string
+          is_active?: boolean
+          last_scanned_at?: string | null
+          name?: string
+          organization_id?: string
+          project_id?: string
+          scan_interval_minutes?: number
+          scan_strategies?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "radars_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "radars_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scan_outputs: {
+        Row: {
+          body: string | null
+          created_at: string
+          data: Json
+          external_ref: string
+          id: string
+          is_reconciled: boolean
+          occurred_at: string
+          organization_id: string
+          output_kind: string
+          radar_id: string
+          radar_target_id: string | null
+          scan_id: string
+          signal_id: string | null
+          title: string
+          url: string | null
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          data?: Json
+          external_ref: string
+          id?: string
+          is_reconciled?: boolean
+          occurred_at?: string
+          organization_id: string
+          output_kind: string
+          radar_id: string
+          radar_target_id?: string | null
+          scan_id: string
+          signal_id?: string | null
+          title: string
+          url?: string | null
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          data?: Json
+          external_ref?: string
+          id?: string
+          is_reconciled?: boolean
+          occurred_at?: string
+          organization_id?: string
+          output_kind?: string
+          radar_id?: string
+          radar_target_id?: string | null
+          scan_id?: string
+          signal_id?: string | null
+          title?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scan_outputs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scan_outputs_radar_id_fkey"
+            columns: ["radar_id"]
+            isOneToOne: false
+            referencedRelation: "radars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scan_outputs_radar_target_id_fkey"
+            columns: ["radar_target_id"]
+            isOneToOne: false
+            referencedRelation: "radar_targets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scan_outputs_scan_id_fkey"
+            columns: ["scan_id"]
+            isOneToOne: false
+            referencedRelation: "scans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scan_outputs_signal_id_fkey"
+            columns: ["signal_id"]
+            isOneToOne: false
+            referencedRelation: "signals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scans: {
+        Row: {
+          finished_at: string | null
+          id: string
+          organization_id: string
+          radar_id: string
+          started_at: string
+          stats: Json
+          status: string
+          strategies_used: string[]
+          trigger: string
+        }
+        Insert: {
+          finished_at?: string | null
+          id?: string
+          organization_id: string
+          radar_id: string
+          started_at?: string
+          stats?: Json
+          status?: string
+          strategies_used?: string[]
+          trigger?: string
+        }
+        Update: {
+          finished_at?: string | null
+          id?: string
+          organization_id?: string
+          radar_id?: string
+          started_at?: string
+          stats?: Json
+          status?: string
+          strategies_used?: string[]
+          trigger?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scans_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scans_radar_id_fkey"
+            columns: ["radar_id"]
+            isOneToOne: false
+            referencedRelation: "radars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      signal_evaluations: {
+        Row: {
+          created_at: string
+          editor_agent_id: string | null
+          error_message: string | null
+          evaluated_at: string | null
+          id: string
+          organization_id: string
+          project_id: string
+          rationale_md: string
+          relevance_score: number | null
+          signal_id: string
+          status: string
+          suggestion_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          editor_agent_id?: string | null
+          error_message?: string | null
+          evaluated_at?: string | null
+          id?: string
+          organization_id: string
+          project_id: string
+          rationale_md?: string
+          relevance_score?: number | null
+          signal_id: string
+          status?: string
+          suggestion_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          editor_agent_id?: string | null
+          error_message?: string | null
+          evaluated_at?: string | null
+          id?: string
+          organization_id?: string
+          project_id?: string
+          rationale_md?: string
+          relevance_score?: number | null
+          signal_id?: string
+          status?: string
+          suggestion_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signal_evaluations_editor_agent_id_fkey"
+            columns: ["editor_agent_id"]
+            isOneToOne: false
+            referencedRelation: "editor_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signal_evaluations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signal_evaluations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signal_evaluations_signal_id_fkey"
+            columns: ["signal_id"]
+            isOneToOne: false
+            referencedRelation: "signals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      signals: {
+        Row: {
+          cluster_key: string
+          created_at: string
+          evidence: Json
+          has_suspicious_content: boolean
+          id: string
+          organization_id: string
+          status: string
+          summary_md: string
+          title: string
+          updated_at: string
+          window_ended_at: string
+          window_started_at: string
+        }
+        Insert: {
+          cluster_key: string
+          created_at?: string
+          evidence?: Json
+          has_suspicious_content?: boolean
+          id?: string
+          organization_id: string
+          status?: string
+          summary_md?: string
+          title: string
+          updated_at?: string
+          window_ended_at?: string
+          window_started_at?: string
+        }
+        Update: {
+          cluster_key?: string
+          created_at?: string
+          evidence?: Json
+          has_suspicious_content?: boolean
+          id?: string
+          organization_id?: string
+          status?: string
+          summary_md?: string
+          title?: string
+          updated_at?: string
+          window_ended_at?: string
+          window_started_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signals_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suggestions: {
+        Row: {
+          created_at: string
+          editor_agent_id: string | null
+          graph_impact: Json
+          has_conflict: boolean
+          has_suspicious_source_content: boolean
+          id: string
+          interval_bucket: string
+          organization_id: string
+          project_id: string
+          reason_md: string
+          recommendation_md: string
+          relevance_score: number | null
+          sibling_group_id: string | null
+          signal_id: string | null
+          signal_summary_md: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          editor_agent_id?: string | null
+          graph_impact?: Json
+          has_conflict?: boolean
+          has_suspicious_source_content?: boolean
+          id?: string
+          interval_bucket: string
+          organization_id: string
+          project_id: string
+          reason_md?: string
+          recommendation_md?: string
+          relevance_score?: number | null
+          sibling_group_id?: string | null
+          signal_id?: string | null
+          signal_summary_md?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          editor_agent_id?: string | null
+          graph_impact?: Json
+          has_conflict?: boolean
+          has_suspicious_source_content?: boolean
+          id?: string
+          interval_bucket?: string
+          organization_id?: string
+          project_id?: string
+          reason_md?: string
+          recommendation_md?: string
+          relevance_score?: number | null
+          sibling_group_id?: string | null
+          signal_id?: string | null
+          signal_summary_md?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suggestions_editor_agent_id_fkey"
+            columns: ["editor_agent_id"]
+            isOneToOne: false
+            referencedRelation: "editor_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suggestions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suggestions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suggestions_signal_id_fkey"
+            columns: ["signal_id"]
+            isOneToOne: false
+            referencedRelation: "signals"
             referencedColumns: ["id"]
           },
         ]
@@ -607,6 +1299,28 @@ export type Database = {
       bootstrap_organization: { Args: never; Returns: string }
       is_org_admin: { Args: { p_organization_id: string }; Returns: boolean }
       is_org_member: { Args: { p_organization_id: string }; Returns: boolean }
+      jobs_archive: {
+        Args: { p_msg_id: number; p_queue: string }
+        Returns: boolean
+      }
+      jobs_enqueue: {
+        Args: { p_message: Json; p_queue: string }
+        Returns: number
+      }
+      jobs_read_batch: {
+        Args: {
+          p_batch_size: number
+          p_queue: string
+          p_visibility_timeout: number
+        }
+        Returns: {
+          enqueued_at: string
+          message: Json
+          msg_id: number
+          read_ct: number
+          vt: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

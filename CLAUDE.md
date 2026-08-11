@@ -28,16 +28,29 @@ Database migrations are applied with the monorepo `sb` wrapper from the
 monorepo root: `sb platform-dev db push` (dev) / `sb platform-prod db push`.
 Never modify an existing migration; add a new one under `supabase/migrations/`.
 
+Dev has no cron; pump the job queues manually (prod runs these via Vercel cron):
+
+```bash
+CS=$(grep ^CRON_SECRET app/.env.local | cut -d= -f2-)
+curl -H "Authorization: Bearer $CS" "http://localhost:4000/api/jobs/radar/process"   # run queued scans + evaluations
+curl -H "Authorization: Bearer $CS" "http://localhost:4000/api/jobs/radar/schedule"  # enqueue interval scans + deferred retries
+curl -H "Authorization: Bearer $CS" "http://localhost:4000/api/jobs/publish/process"  # render drafts + open PRs
+```
+Each queue gets its own domain route with exactly one responsibility.
+
+Webhook deliveries need the smee client running:
+`smee -u https://smee.io/SFx5SFgaT8gqDeft -t http://localhost:4000/api/github/webhook`
+
 **Always run typecheck + tests after substantive changes.** There is no
 ESLint/Prettier by convention; the type checker and tests are the gate.
 
 ## Architecture rules
 
-- **One deployable**: workers are queue-draining route handlers
-  (`/api/jobs/drain`) triggered by Vercel cron; never add a separate worker
+- **One deployable**: workers are queue-processing route handlers
+  (`/api/jobs/radar/process`) triggered by Vercel cron; never add a separate worker
   process. Job handlers must be idempotent (upsert by natural keys).
 - **Roles**: organizations are multi-user. `admin` = configuration changes
-  (projects, sources, editors, policies, members, keys); `user` = operational
+  (projects, editors, policies, members, keys); `user` = operational
   tasks (review/accept/dismiss suggestions, elaboration, feedback). Enforce in
   RLS (`is_org_member` / `is_org_admin`) AND in the service layer.
 - **RLS everywhere**: every table carries `organization_id`, default-deny.

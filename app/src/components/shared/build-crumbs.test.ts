@@ -12,7 +12,7 @@ describe("buildCrumbs", () => {
       { label: "Content", href: "/content" },
     ]);
     expect(buildCrumbs("/radar")).toEqual([
-      { label: "Radar", href: "/radar" },
+      { label: "Radars", href: "/radar" },
     ]);
     expect(buildCrumbs("/editors")).toEqual([
       { label: "Editors", href: "/editors" },
@@ -45,10 +45,24 @@ describe("buildCrumbs", () => {
   it("maps project sub-sections without the project crumb itself", () => {
     expect(buildCrumbs("/projects/abc-123")).toEqual([]);
     expect(buildCrumbs("/projects/abc-123/radar")).toEqual([
-      { label: "Radar", href: "/projects/abc-123/radar" },
+      { label: "Radars", href: "/projects/abc-123/radar" },
     ]);
     expect(buildCrumbs("/projects/abc-123/settings")).toEqual([
       { label: "Settings", href: "/projects/abc-123/settings" },
+    ]);
+  });
+
+  it("adds a Suggestion leaf on suggestion detail routes", () => {
+    expect(buildCrumbs("/projects/abc-123/content/sugg-1")).toEqual([
+      { label: "Content", href: "/projects/abc-123/content" },
+      { label: "Suggestion" },
+    ]);
+  });
+
+  it("adds a leaf on radar detail routes", () => {
+    expect(buildCrumbs("/projects/abc-123/radar/radar-1")).toEqual([
+      { label: "Radars", href: "/projects/abc-123/radar" },
+      { label: "Radar detail" },
     ]);
   });
 

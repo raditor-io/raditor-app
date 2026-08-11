@@ -10,10 +10,8 @@ import {
   SITE_TYPES,
   SUGGESTION_INTERVALS,
   urlMappingConfigSchema,
-  watchConfigSchema,
 } from "@/lib/schemas/project-config";
 import { updateProjectSettings } from "@/services/project";
-import { ensureSource, setSubscription } from "@/services/source";
 
 function fail(err: unknown, fallback: string): ActionResult {
   return { error: err instanceof Error ? err.message : fallback };
@@ -146,68 +144,5 @@ export async function updateUrlMappingAction(
     return { notice: "URL mapping saved." };
   } catch (err) {
     return fail(err, "Could not save URL mapping.");
-  }
-}
-
-const subscriptionSchema = z.object({
-  project_id: z.uuid(),
-  source_id: z.uuid(),
-  subscribe: z.enum(["true", "false"]),
-});
-
-export async function toggleSubscriptionAction(
-  formData: FormData,
-): Promise<void> {
-  const parsed = subscriptionSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return;
-  await setSubscription(
-    parsed.data.project_id,
-    parsed.data.source_id,
-    parsed.data.subscribe === "true",
-  );
-  revalidatePath(`/projects/${parsed.data.project_id}/settings`);
-}
-
-const addRepoSchema = z.object({
-  project_id: z.uuid(),
-  repo_choice: z.string().min(1),
-  is_watching_releases: z.string().optional(),
-  is_watching_default_branch_merges: z.string().optional(),
-  is_watching_labeled_issues: z.string().optional(),
-  issue_labels: z.string().optional(),
-});
-
-export async function addRepoSourceAction(
-  _prev: ActionResult,
-  formData: FormData,
-): Promise<ActionResult> {
-  const parsed = addRepoSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { error: "Pick a repository first." };
-
-  const [installationId, fullName] = parsed.data.repo_choice.split("::");
-  if (!installationId || !fullName) return { error: "Invalid repository choice." };
-
-  const watch = watchConfigSchema.parse({
-    is_watching_releases: parsed.data.is_watching_releases === "on",
-    is_watching_default_branch_merges:
-      parsed.data.is_watching_default_branch_merges === "on",
-    is_watching_labeled_issues: parsed.data.is_watching_labeled_issues === "on",
-    issue_labels: (parsed.data.issue_labels ?? "")
-      .split(",")
-      .map((label) => label.trim())
-      .filter(Boolean),
-  });
-
-  try {
-    const sourceId = await ensureSource({
-      githubInstallationId: Number(installationId),
-      repoFullName: fullName,
-      watchConfig: watch,
-    });
-    await setSubscription(parsed.data.project_id, sourceId, true);
-    revalidatePath(`/projects/${parsed.data.project_id}/settings`);
-    return { notice: `${fullName} connected and subscribed.` };
-  } catch (err) {
-    return fail(err, "Could not connect the repository.");
   }
 }

@@ -1,11 +1,12 @@
 /**
- * Pure GitHub webhook payload → source_event row mapping. No AI, no network:
- * runs synchronously in the webhook receiver. Watch flags on the source's
- * watch_config decide which events materialize; everything else returns null.
+ * Pure GitHub webhook payload → radar_target_event mapping (the mechanical
+ * parser of the target_emitted_events strategy). No AI, no network: runs
+ * synchronously in the webhook receiver. Watch flags on the target's config
+ * decide which events materialize; everything else returns null.
  *
- * The payload column keeps only what the radar needs (titles, URLs, refs) —
- * source text is attacker-writable and is treated as data downstream
- * (wrapped via ai/untrusted before ever reaching a prompt).
+ * The payload keeps only what scans need (titles, URLs, refs) — emitted text
+ * is attacker-writable and is treated as data downstream (wrapped via
+ * ai/untrusted before ever reaching a prompt).
  */
 
 export interface WatchConfig {
@@ -16,15 +17,15 @@ export interface WatchConfig {
   path_filters?: string[];
 }
 
-export type SourceEventKind =
+export type TargetEventKind =
   | "release_published"
   | "pull_request_merged"
   | "push_default_branch"
   | "issue_labeled";
 
-export interface NormalizedSourceEvent {
-  eventKind: SourceEventKind;
-  /** Stable id within the source; (source_id, external_ref) dedupes redelivery. */
+export interface NormalizedTargetEvent {
+  eventKind: TargetEventKind;
+  /** Stable id within the target; (radar_target_id, external_ref) dedupes redelivery. */
   externalRef: string;
   occurredAt: string;
   payload: Record<string, unknown>;
@@ -38,7 +39,7 @@ export function normalizeGithubEvent(
   eventName: string,
   payload: GithubPayload,
   watchConfig: WatchConfig,
-): NormalizedSourceEvent | null {
+): NormalizedTargetEvent | null {
   switch (eventName) {
     case "release":
       return normalizeRelease(payload, watchConfig);
@@ -56,7 +57,7 @@ export function normalizeGithubEvent(
 function normalizeRelease(
   payload: GithubPayload,
   watch: WatchConfig,
-): NormalizedSourceEvent | null {
+): NormalizedTargetEvent | null {
   if (!watch.is_watching_releases) return null;
   if (payload.action !== "published") return null;
   const release = payload.release;
@@ -78,7 +79,7 @@ function normalizeRelease(
 function normalizePullRequest(
   payload: GithubPayload,
   watch: WatchConfig,
-): NormalizedSourceEvent | null {
+): NormalizedTargetEvent | null {
   if (!watch.is_watching_default_branch_merges) return null;
   if (payload.action !== "closed") return null;
   const pr = payload.pull_request;
@@ -104,7 +105,7 @@ function normalizePullRequest(
 function normalizePush(
   payload: GithubPayload,
   watch: WatchConfig,
-): NormalizedSourceEvent | null {
+): NormalizedTargetEvent | null {
   if (!watch.is_watching_default_branch_merges) return null;
   const defaultBranch = payload.repository?.default_branch;
   if (!defaultBranch || payload.ref !== `refs/heads/${defaultBranch}`) {
@@ -132,7 +133,7 @@ function normalizePush(
 function normalizeIssue(
   payload: GithubPayload,
   watch: WatchConfig,
-): NormalizedSourceEvent | null {
+): NormalizedTargetEvent | null {
   if (!watch.is_watching_labeled_issues) return null;
   if (payload.action !== "labeled") return null;
   const issue = payload.issue;

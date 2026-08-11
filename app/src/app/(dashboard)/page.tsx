@@ -36,7 +36,7 @@ export default async function ProjectsPage() {
           </h2>
           <p className="mx-auto mt-2 max-w-md text-sm text-muted">
             Create your first project to connect a repository and let the
-            radar watch your sources.
+            radar scan for signals.
           </p>
         </div>
       ) : (

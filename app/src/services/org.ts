@@ -260,6 +260,37 @@ export async function removeMember(membershipId: string): Promise<void> {
 }
 
 /**
+ * Update the org's per-functionality model routing (admin). Empty values
+ * remove the override so the platform default applies.
+ */
+export async function updateModelRouting(
+  routing: Record<string, string>,
+): Promise<void> {
+  const ctx = await requireAdminContext();
+  const supabase = await serverClient();
+
+  const cleaned = Object.fromEntries(
+    Object.entries(routing).filter(([, model]) => model.trim().length > 0),
+  );
+
+  const { error } = await supabase
+    .from("organizations")
+    .update({ model_routing: cleaned })
+    .eq("id", ctx.organization.id);
+  if (error) throw error;
+
+  await recordEvent({
+    organizationId: ctx.organization.id,
+    eventType: "model_routing_updated",
+    subjectType: "organization",
+    subjectId: ctx.organization.id,
+    actorKind: "user",
+    actorId: ctx.user.id,
+    payload: { routing: cleaned },
+  });
+}
+
+/**
  * Accept an invitation via its emailed token (the /invite/<token> page).
  * Returns the joined organization id. The definer function enforces email
  * match and expiry; errors surface as messages for the page to render.

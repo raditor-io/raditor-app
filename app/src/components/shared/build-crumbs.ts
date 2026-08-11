@@ -38,10 +38,16 @@ export function buildCrumbs(pathname: string): Crumb[] {
     switch (sub) {
       case undefined:
         return [];
-      case "content":
-        return [{ label: "Content", href: `${base}/content` }];
-      case "radar":
-        return [{ label: "Radar", href: `${base}/radar` }];
+      case "content": {
+        const crumbs: Crumb[] = [{ label: "Content", href: `${base}/content` }];
+        if (seg[3]) crumbs.push({ label: "Suggestion" });
+        return crumbs;
+      }
+      case "radar": {
+        const crumbs: Crumb[] = [{ label: "Radars", href: `${base}/radar` }];
+        if (seg[3]) crumbs.push({ label: "Radar detail" });
+        return crumbs;
+      }
       case "editors":
         return [{ label: "Editors", href: `${base}/editors` }];
       case "settings":
@@ -56,7 +62,7 @@ export function buildCrumbs(pathname: string): Crumb[] {
       return [{ label: "Content", href: "/content" }];
 
     case "radar":
-      return [{ label: "Radar", href: "/radar" }];
+      return [{ label: "Radars", href: "/radar" }];
 
     case "editors": {
       const crumbs: Crumb[] = [{ label: "Editors", href: "/editors" }];

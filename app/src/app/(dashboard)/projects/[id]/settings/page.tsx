@@ -1,20 +1,12 @@
-import { IconBrandGithub } from "@tabler/icons-react";
-
 import { RepoSelect } from "@/components/github/repo-select";
-import { AddSourceModal } from "@/components/projects/add-source-modal";
 import { ActionForm } from "@/components/shared/action-form";
 import { INPUT_CLASSES, LABEL_CLASSES } from "@/components/shared/form-styles";
 import { SITE_TYPES, SUGGESTION_INTERVALS } from "@/lib/schemas/project-config";
 import { requireOrgContext } from "@/services/org";
 import { getProject } from "@/services/project";
-import {
-  listAvailableRepos,
-  listSources,
-  listSubscribedSourceIds,
-} from "@/services/source";
+import { listAvailableRepos } from "@/services/radar";
 
 import {
-  toggleSubscriptionAction,
   updateCadenceAction,
   updateDeployAction,
   updateGeneralAction,
@@ -33,10 +25,6 @@ export default async function ProjectSettingsPage({
   const project = await getProject(id);
   if (!project) return null;
 
-  const [sources, subscribedIds] = await Promise.all([
-    listSources(),
-    listSubscribedSourceIds(id),
-  ]);
   // Repo listing needs the GitHub App env + an installation; degrade quietly.
   const availableRepos = await listAvailableRepos().catch(() => []);
   const settingsPath = `/projects/${id}/settings`;
@@ -54,7 +42,6 @@ export default async function ProjectSettingsPage({
               ["Site type", project.site_type],
               ["Cadence", `${project.suggestion_interval}, max ${project.max_suggestions_per_interval}`],
               ["Deploy repo", project.deploy_repo_full_name ?? "not set"],
-              ["Subscribed sources", String(subscribedIds.length)],
             ]}
           />
         </Section>
@@ -115,73 +102,6 @@ export default async function ProjectSettingsPage({
         </ActionForm>
       </Section>
 
-      <Section
-        title="Sources"
-        description="Sources are shared across the organization; this project only reacts to the sources it subscribes to."
-        headerRight={
-          <AddSourceModal
-            projectId={project.id}
-            repoOptions={availableRepos
-              .filter(
-                (repo) =>
-                  !sources.some(
-                    (s) => s.github_repo_full_name === repo.fullName,
-                  ),
-              )
-              .map((repo) => ({
-                value: `${repo.githubInstallationId}::${repo.fullName}`,
-                label: repo.fullName,
-              }))}
-          />
-        }
-      >
-        {sources.length > 0 ? (
-          <ul className="space-y-2">
-            {sources.map((source) => {
-              const isSubscribed = subscribedIds.includes(source.id);
-              return (
-                <li
-                  key={source.id}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface px-4 py-3"
-                >
-                  <span className="flex min-w-0 items-center gap-2 text-sm text-foreground">
-                    <IconBrandGithub
-                      size={16}
-                      stroke={1.75}
-                      className="shrink-0 text-muted"
-                    />
-                    <span className="truncate">{source.display_name}</span>
-                  </span>
-                  <form action={toggleSubscriptionAction}>
-                    <input type="hidden" name="project_id" value={project.id} />
-                    <input type="hidden" name="source_id" value={source.id} />
-                    <input
-                      type="hidden"
-                      name="subscribe"
-                      value={isSubscribed ? "false" : "true"}
-                    />
-                    <button
-                      type="submit"
-                      className={
-                        isSubscribed
-                          ? "text-xs text-accent-deep hover:underline"
-                          : "text-xs text-accent hover:underline"
-                      }
-                    >
-                      {isSubscribed ? "Unsubscribe" : "Subscribe"}
-                    </button>
-                  </form>
-                </li>
-              );
-            })}
-          </ul>
-        ) : (
-          <p className="text-sm text-faint">
-            No sources connected yet. Add one to give the radar something to
-            watch.
-          </p>
-        )}
-      </Section>
 
       <Section title="Cadence">
         <ActionForm action={updateCadenceAction} requireDirty>
