@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import type { ActionResult } from "@/components/shared/action-form";
+import { errorMessage } from "@/lib/error-message";
 import { createEditor, setAssignment, updateEditor } from "@/services/editor";
 
 const createSchema = z.object({
@@ -29,7 +30,7 @@ export async function createEditorAction(
     editorId = editor.id;
   } catch (err) {
     return {
-      error: err instanceof Error ? err.message : "Could not create the editor.",
+      error: errorMessage(err, "Could not create the editor."),
     };
   }
   redirect(`/editors/${editorId}`);
@@ -56,7 +57,7 @@ export async function updateEditorAction(
     return { notice: "Editor saved." };
   } catch (err) {
     return {
-      error: err instanceof Error ? err.message : "Could not save the editor.",
+      error: errorMessage(err, "Could not save the editor."),
     };
   }
 }

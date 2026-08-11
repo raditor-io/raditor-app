@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import type { ActionResult } from "@/components/shared/action-form";
+import { errorMessage } from "@/lib/error-message";
 import {
   parseAllowlistLines,
   pathAllowlistSchema,
@@ -14,7 +15,7 @@ import {
 import { updateProjectSettings } from "@/services/project";
 
 function fail(err: unknown, fallback: string): ActionResult {
-  return { error: err instanceof Error ? err.message : fallback };
+  return { error: errorMessage(err, fallback) };
 }
 
 const generalSchema = z.object({

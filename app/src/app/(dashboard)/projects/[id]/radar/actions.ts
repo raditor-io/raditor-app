@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import type { ActionResult } from "@/components/shared/action-form";
+import { errorMessage } from "@/lib/error-message";
 import { watchConfigSchema } from "@/lib/schemas/project-config";
 import {
   addRepoTarget,
@@ -71,7 +72,7 @@ export async function createRadarAction(
     radarId = radar.id;
   } catch (err) {
     return {
-      error: err instanceof Error ? err.message : "Could not create the radar.",
+      error: errorMessage(err, "Could not create the radar."),
     };
   }
   redirect(`/projects/${parsed.data.project_id}/radar/${radarId}`);
@@ -110,7 +111,7 @@ export async function updateRadarAction(
     return { notice: "Radar saved." };
   } catch (err) {
     return {
-      error: err instanceof Error ? err.message : "Could not save the radar.",
+      error: errorMessage(err, "Could not save the radar."),
     };
   }
 }
@@ -141,7 +142,7 @@ export async function addRepoTargetAction(
     return { notice: `${repo.fullName} added as target.` };
   } catch (err) {
     return {
-      error: err instanceof Error ? err.message : "Could not add the target.",
+      error: errorMessage(err, "Could not add the target."),
     };
   }
 }

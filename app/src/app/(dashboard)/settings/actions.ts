@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import type { ActionResult } from "@/components/shared/action-form";
+import { errorMessage } from "@/lib/error-message";
 import { updateModelRouting } from "@/services/org";
 
 const CONFIGURABLE_FUNCTIONALITIES = [
@@ -42,7 +43,7 @@ export async function updateModelRoutingAction(
   } catch (err) {
     return {
       error:
-        err instanceof Error ? err.message : "Could not save model routing.",
+        errorMessage(err, "Could not save model routing."),
     };
   }
 }

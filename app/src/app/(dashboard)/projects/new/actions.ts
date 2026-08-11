@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import type { ActionResult } from "@/components/shared/action-form";
+import { errorMessage } from "@/lib/error-message";
 import { SITE_TYPES, watchConfigSchema } from "@/lib/schemas/project-config";
 import { createProject } from "@/services/project";
 import { createRadar } from "@/services/radar";
@@ -68,7 +69,7 @@ export async function createProjectAction(
     }
   } catch (err) {
     return {
-      error: err instanceof Error ? err.message : "Could not create the project.",
+      error: errorMessage(err, "Could not create the project."),
     };
   }
 

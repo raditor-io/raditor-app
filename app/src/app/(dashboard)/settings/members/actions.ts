@@ -1,5 +1,6 @@
 "use server";
 
+import { errorMessage } from "@/lib/error-message";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -44,7 +45,7 @@ export async function inviteMemberAction(
     };
   } catch (err) {
     return {
-      error: err instanceof Error ? err.message : "Could not send invitation.",
+      error: errorMessage(err, "Could not send invitation."),
     };
   }
 }
