@@ -153,6 +153,33 @@ export async function updateRadar(
   });
 }
 
+/**
+ * Pause switch (deactivated_at): a deactivated radar stays configured and
+ * listed, but scheduling and scan execution skip it.
+ */
+export async function setRadarActivation(
+  radarId: string,
+  isActive: boolean,
+): Promise<void> {
+  const ctx = await requireAdminContext();
+  const supabase = await serverClient();
+  const { error } = await supabase
+    .from("radars")
+    .update({ deactivated_at: isActive ? null : new Date().toISOString() })
+    .eq("id", radarId)
+    .eq("organization_id", ctx.organization.id);
+  if (error) throw error;
+
+  await recordEvent({
+    organizationId: ctx.organization.id,
+    eventType: isActive ? "radar_activated" : "radar_deactivated",
+    subjectType: "radar",
+    subjectId: radarId,
+    actorKind: "user",
+    actorId: ctx.user.id,
+  });
+}
+
 // --- Targets ------------------------------------------------------------------
 
 export async function listTargets(radarId: string): Promise<RadarTargetRow[]> {

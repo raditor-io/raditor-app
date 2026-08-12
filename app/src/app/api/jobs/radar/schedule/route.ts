@@ -28,7 +28,9 @@ async function schedule(request: NextRequest) {
     .from("radars")
     .select("id, last_scanned_at, scan_interval_minutes")
     .eq("is_active", true)
+    .is("deactivated_at", null)
     .limit(500);
+  const schedulableRadarIds = new Set((dueRadars ?? []).map((r) => r.id));
   for (const radar of dueRadars ?? []) {
     const last = radar.last_scanned_at
       ? new Date(radar.last_scanned_at).getTime()
@@ -40,12 +42,15 @@ async function schedule(request: NextRequest) {
   }
 
   // Backstop: unconsumed inbox events whose event-triggered scan got lost.
+  // Only for schedulable radars — deactivated ones keep their inbox untouched.
   const { data: pendingEvents } = await admin
     .from("target_events")
     .select("radar_id")
     .is("consumed_by_scan_id", null)
     .limit(500);
-  for (const row of pendingEvents ?? []) scanRadarIds.add(row.radar_id);
+  for (const row of pendingEvents ?? []) {
+    if (schedulableRadarIds.has(row.radar_id)) scanRadarIds.add(row.radar_id);
+  }
 
   for (const radarId of scanRadarIds) {
     await enqueueJob("radar", "run_scan", { radarId, trigger: "interval" });

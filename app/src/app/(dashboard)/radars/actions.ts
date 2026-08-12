@@ -12,6 +12,7 @@ import {
   createRadar,
   removeTarget,
   SCAN_STRATEGIES,
+  setRadarActivation,
   updateRadar,
   type ScanStrategy,
 } from "@/services/radar";
@@ -135,6 +136,25 @@ export async function addRepoTargetAction(
       error: errorMessage(err, "Could not add the target."),
     };
   }
+}
+
+const activationSchema = z.object({
+  radar_id: z.uuid(),
+  is_active: z.boolean(),
+});
+
+/** Bound from the radars list row menu: (radarId, isActive) via .bind(). */
+export async function setRadarActivationAction(
+  radarId: string,
+  isActive: boolean,
+): Promise<void> {
+  const parsed = activationSchema.safeParse({
+    radar_id: radarId,
+    is_active: isActive,
+  });
+  if (!parsed.success) return;
+  await setRadarActivation(parsed.data.radar_id, parsed.data.is_active);
+  revalidatePath("/radars");
 }
 
 const removeTargetSchema = z.object({

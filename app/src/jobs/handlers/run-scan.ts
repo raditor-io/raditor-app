@@ -44,7 +44,7 @@ async function handleRunScan(payload: {
     .select("*")
     .eq("id", radarId)
     .maybeSingle();
-  if (!radar?.is_active) return;
+  if (!radar?.is_active || radar.deactivated_at) return;
 
   const { data: targets } = await admin
     .from("radar_targets")

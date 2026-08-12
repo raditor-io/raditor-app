@@ -2,20 +2,29 @@
 
 /**
  * Per-row dot menu for table lists: a right-aligned trigger opening a
- * popover of link items. Server pages pass plain {label, href} items so
- * the props stay serializable across the RSC boundary. Outside-click/
- * Escape dismissal mirrors the feed-tab menu.
+ * popover of link and action items. Server pages pass plain {label, href}
+ * items or {label, action} items (a server action, args pre-bound via
+ * .bind()) so the props stay serializable across the RSC boundary.
+ * Outside-click/Escape dismissal mirrors the feed-tab menu.
  */
 import { IconDots } from "@tabler/icons-react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 
-export interface RowMenuItem {
+export interface RowMenuLinkItem {
   label: string;
   href: string;
   /** Open in a new tab (external links, e.g. evidence sources). */
   isExternal?: boolean;
 }
+
+export interface RowMenuActionItem {
+  label: string;
+  /** Server action with all args pre-bound (invoked on click). */
+  action: () => Promise<void>;
+}
+
+export type RowMenuItem = RowMenuLinkItem | RowMenuActionItem;
 
 export function RowMenu({
   label,
@@ -26,6 +35,7 @@ export function RowMenu({
   items: RowMenuItem[];
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [, startTransition] = useTransition();
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -71,7 +81,20 @@ export function RowMenu({
           className="absolute right-0 top-full z-50 mt-1.5 w-48 overflow-hidden rounded-lg border border-border bg-surface p-1 shadow-lg"
         >
           {items.map((item, i) =>
-            item.isExternal ? (
+            "action" in item ? (
+              <button
+                key={i}
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setIsOpen(false);
+                  startTransition(() => item.action());
+                }}
+                className={`${itemClasses} w-full cursor-pointer text-left`}
+              >
+                {item.label}
+              </button>
+            ) : item.isExternal ? (
               <a
                 key={i}
                 href={item.href}

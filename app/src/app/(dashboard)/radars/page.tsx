@@ -5,6 +5,7 @@ import {
 } from "@tabler/icons-react";
 import Link from "next/link";
 
+import { setRadarActivationAction } from "@/app/(dashboard)/radars/actions";
 import { CreateRadarModal } from "@/components/radars/create-radar-modal";
 import {
   ListEmpty,
@@ -78,6 +79,7 @@ export default async function RadarsPage({
             const repoNames = targets
               .map((t) => t.github_repo_full_name)
               .filter(Boolean);
+            const isDeactivated = radar.deactivated_at !== null;
             return (
               <tr key={radar.id} className="transition-colors hover:bg-hover">
                 <td className="px-4 py-3">
@@ -88,7 +90,12 @@ export default async function RadarsPage({
                     <IconRadar2
                       size={18}
                       stroke={1.75}
-                      className="shrink-0 text-muted"
+                      aria-label={
+                        isDeactivated ? "Deactivated radar" : "Active radar"
+                      }
+                      className={`shrink-0 ${
+                        isDeactivated ? "text-faint" : "text-accent"
+                      }`}
                     />
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-medium text-foreground">
@@ -137,6 +144,18 @@ export default async function RadarsPage({
                       { label: "Open", href: `/radars/${radar.id}` },
                       { label: "Signals", href: `/radars/${radar.id}/signals` },
                       { label: "Settings", href: `/radars/${radar.id}/settings` },
+                      ...(ctx.isAdmin
+                        ? [
+                            {
+                              label: isDeactivated ? "Activate" : "Deactivate",
+                              action: setRadarActivationAction.bind(
+                                null,
+                                radar.id,
+                                isDeactivated,
+                              ),
+                            },
+                          ]
+                        : []),
                     ]}
                   />
                 </td>
