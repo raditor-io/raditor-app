@@ -1,89 +1,59 @@
 import { describe, expect, it } from "vitest";
 
-import { activeProjectId, buildCrumbs } from "./build-crumbs";
+import { activeRadarId, buildCrumbs } from "./build-crumbs";
 
 describe("buildCrumbs", () => {
-  it("returns no crumbs at the org home (org crumb is the leaf)", () => {
+  it("returns no crumbs on the org home (feeds view)", () => {
     expect(buildCrumbs("/")).toEqual([]);
   });
 
-  it("maps org-level sections", () => {
-    expect(buildCrumbs("/content")).toEqual([
-      { label: "Content", href: "/content" },
-    ]);
-    expect(buildCrumbs("/radar")).toEqual([
-      { label: "Radars", href: "/radar" },
-    ]);
-    expect(buildCrumbs("/editors")).toEqual([
-      { label: "Editors", href: "/editors" },
+  it("maps feed routes", () => {
+    expect(buildCrumbs("/feeds/abc")).toEqual([{ label: "Feeds", href: "/" }]);
+    expect(buildCrumbs("/feeds/abc/settings")).toEqual([
+      { label: "Feeds", href: "/" },
+      { label: "Configure" },
     ]);
   });
 
-  it("maps nested settings routes with a linked parent", () => {
+  it("maps radar tab trails (radar crumb comes from context)", () => {
+    expect(buildCrumbs("/radars/abc")).toEqual([]);
+    expect(buildCrumbs("/radars/abc/signals")).toEqual([{ label: "Signals" }]);
+    expect(buildCrumbs("/radars/abc/settings")).toEqual([
+      { label: "Settings" },
+    ]);
+  });
+
+  it("returns no trail on the radars grid", () => {
+    expect(buildCrumbs("/radars")).toEqual([]);
+  });
+
+  it("maps settings with the members leaf", () => {
+    expect(buildCrumbs("/settings")).toEqual([
+      { label: "Settings", href: "/settings" },
+    ]);
     expect(buildCrumbs("/settings/members")).toEqual([
       { label: "Settings", href: "/settings" },
       { label: "Members" },
     ]);
   });
 
-  it("keeps plain settings a single crumb", () => {
-    expect(buildCrumbs("/settings")).toEqual([
+  it("ignores trailing slashes and unknown sections", () => {
+    expect(buildCrumbs("/settings/")).toEqual([
       { label: "Settings", href: "/settings" },
     ]);
-  });
-
-  it("ignores trailing slashes", () => {
-    expect(buildCrumbs("/content/")).toEqual([
-      { label: "Content", href: "/content" },
-    ]);
-  });
-
-  it("returns no crumbs for unknown sections", () => {
-    expect(buildCrumbs("/nonexistent")).toEqual([]);
-  });
-
-  it("maps project sub-sections without the project crumb itself", () => {
-    expect(buildCrumbs("/projects/abc-123")).toEqual([]);
-    expect(buildCrumbs("/projects/abc-123/radar")).toEqual([
-      { label: "Radars", href: "/projects/abc-123/radar" },
-    ]);
-    expect(buildCrumbs("/projects/abc-123/settings")).toEqual([
-      { label: "Settings", href: "/projects/abc-123/settings" },
-    ]);
-  });
-
-  it("adds a Suggestion leaf on suggestion detail routes", () => {
-    expect(buildCrumbs("/projects/abc-123/content/sugg-1")).toEqual([
-      { label: "Content", href: "/projects/abc-123/content" },
-      { label: "Suggestion" },
-    ]);
-  });
-
-  it("adds a leaf on radar detail routes", () => {
-    expect(buildCrumbs("/projects/abc-123/radar/radar-1")).toEqual([
-      { label: "Radars", href: "/projects/abc-123/radar" },
-      { label: "Radar detail" },
-    ]);
-  });
-
-  it("maps the new-project and new-editor routes", () => {
-    expect(buildCrumbs("/projects/new")).toEqual([{ label: "New project" }]);
-    expect(buildCrumbs("/editors/new")).toEqual([
-      { label: "Editors", href: "/editors" },
-      { label: "New editor" },
-    ]);
+    expect(buildCrumbs("/nope")).toEqual([]);
   });
 });
 
-describe("activeProjectId", () => {
-  it("extracts the project id from project routes", () => {
-    expect(activeProjectId("/projects/abc-123/radar")).toBe("abc-123");
-    expect(activeProjectId("/projects/abc-123")).toBe("abc-123");
+describe("activeRadarId", () => {
+  it("extracts the radar id from radar routes", () => {
+    expect(activeRadarId("/radars/abc-123")).toBe("abc-123");
+    expect(activeRadarId("/radars/abc-123/signals")).toBe("abc-123");
   });
 
-  it("returns null at org level and on /projects/new", () => {
-    expect(activeProjectId("/content")).toBeNull();
-    expect(activeProjectId("/")).toBeNull();
-    expect(activeProjectId("/projects/new")).toBeNull();
+  it("returns null elsewhere", () => {
+    expect(activeRadarId("/")).toBeNull();
+    expect(activeRadarId("/feeds/x")).toBeNull();
+    expect(activeRadarId("/settings")).toBeNull();
   });
 });

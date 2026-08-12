@@ -5,6 +5,7 @@
  */
 
 export const INPUT_CLASSES =
-  "w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-faint focus:border-accent focus:outline-none";
+  "w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-faint transition-shadow focus:border-border-strong focus:outline-none focus:ring-4 focus:ring-foreground/5";
 
-export const LABEL_CLASSES = "mb-1 block text-sm text-muted";
+// Field labels: use FormField / FormFieldGroup (label-left rows) from
+// ./form-field instead of ad-hoc label markup.

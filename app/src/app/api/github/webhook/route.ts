@@ -1,7 +1,7 @@
 /**
  * GitHub App webhook receiver. Cheap and synchronous: verify the signature,
  * keep installation state in sync, and normalize watched source events into
- * radar_target_events inbox rows (no AI here — scans interpret the inbox).
+ * target_events inbox rows (no AI here — scans interpret the inbox).
  *
  * Returns 2xx fast so GitHub does not retry; signature failures 401.
  */
@@ -47,9 +47,6 @@ export async function POST(request: NextRequest) {
     } else if (eventName === "installation_repositories") {
       await handleInstallationRepositories(payload);
     } else {
-      if (eventName === "pull_request") {
-        await trackRaditorPullRequest(payload);
-      }
       await handleTargetEvent(eventName, payload, deliveryId);
     }
   } catch (err) {
@@ -135,45 +132,9 @@ async function handleInstallationRepositories(payload: AnyPayload) {
   });
 }
 
-/** Track merge/close of PRs Raditor itself opened (github_pull_requests). */
-async function trackRaditorPullRequest(payload: AnyPayload) {
-  if (payload.action !== "closed") return;
-  const repoFullName: string | undefined = payload.repository?.full_name;
-  const prNumber: number | undefined = payload.pull_request?.number;
-  if (!repoFullName || !prNumber) return;
-
-  const admin = adminClient();
-  const { data: tracked } = await admin
-    .from("github_pull_requests")
-    .select("id, organization_id, suggestion_id")
-    .eq("repo_full_name", repoFullName)
-    .eq("pr_number", prNumber)
-    .maybeSingle();
-  if (!tracked) return;
-
-  const isMerged = Boolean(payload.pull_request?.merged);
-  await admin
-    .from("github_pull_requests")
-    .update(
-      isMerged
-        ? { status: "merged", merged_at: new Date().toISOString() }
-        : { status: "closed", closed_at: new Date().toISOString() },
-    )
-    .eq("id", tracked.id);
-
-  await recordEvent({
-    organizationId: tracked.organization_id,
-    eventType: isMerged ? "pull_request_merged" : "pull_request_closed",
-    subjectType: "suggestion",
-    subjectId: tracked.suggestion_id,
-    actorKind: "user",
-    payload: { repo: repoFullName, pr_number: prNumber },
-  });
-}
-
 /**
  * Deliveries route to radar_targets (the emitters' addresses inside radars);
- * matched events land in the radar_target_events inbox mechanically. A
+ * matched events land in the target_events inbox mechanically. A
  * debounce-light event-triggered scan is enqueued per affected radar — the
  * scan is the interpretation stage, never this receiver.
  */
@@ -219,7 +180,7 @@ async function handleTargetEvent(
     );
     if (!normalized) continue;
 
-    const { error } = await admin.from("radar_target_events").upsert(
+    const { error } = await admin.from("target_events").upsert(
       {
         organization_id: installation.organization_id,
         radar_id: target.radar_id,

@@ -1,7 +1,7 @@
 /**
  * Functionality router: resolves the model through the ladder
- * (editor override -> organization model_routing -> platform defaults),
- * resolves the provider key (org BYOK arrives Phase 9), runs the chat, and
+ * (explicit override -> organization model_routing -> platform defaults),
+ * resolves the provider key (org BYOK comes later), runs the chat, and
  * meters usage into ai_usage_events. All AI calls go through aiChat().
  */
 import { estimateCostUsd, ROUTING_DEFAULTS } from "@/ai/routing-defaults";
@@ -19,15 +19,13 @@ export interface AiChatInput {
   organizationId: string;
   functionality: AiFunctionality;
   messages: ChatMessage[];
-  projectId?: string;
-  editorAgentId?: string;
-  suggestionId?: string;
   scanId?: string;
-  /** Editor model_config override, when the caller has it loaded. */
+  /** Explicit model override, when the caller has one configured. */
   modelOverride?: string;
   temperature?: number;
   maxTokens?: number;
   isJsonResponse?: boolean;
+  isWebSearchEnabled?: boolean;
 }
 
 /** Test seam: inject a fake provider; production resolves Venice lazily. */
@@ -80,14 +78,12 @@ export async function aiChat(input: AiChatInput): Promise<ChatResult> {
     temperature: input.temperature,
     maxTokens: input.maxTokens,
     isJsonResponse: input.isJsonResponse,
+    isWebSearchEnabled: input.isWebSearchEnabled,
   });
 
   try {
     await adminClient().from("ai_usage_events").insert({
       organization_id: input.organizationId,
-      project_id: input.projectId ?? null,
-      editor_agent_id: input.editorAgentId ?? null,
-      suggestion_id: input.suggestionId ?? null,
       scan_id: input.scanId ?? null,
       functionality: input.functionality,
       provider: provider.id,

@@ -4,7 +4,8 @@ import { VeniceProvider } from "@/ai/providers/venice";
 import { ROUTING_DEFAULTS } from "@/ai/routing-defaults";
 import type { AiFunctionality } from "@/ai/types";
 import { ActionForm } from "@/components/shared/action-form";
-import { INPUT_CLASSES, LABEL_CLASSES } from "@/components/shared/form-styles";
+import { FormField } from "@/components/shared/form-field";
+import { INPUT_CLASSES } from "@/components/shared/form-styles";
 import { serverEnv } from "@/lib/env";
 import { requireOrgContext } from "@/services/org";
 
@@ -23,25 +24,10 @@ const MODEL_SETTINGS: Array<{
     description: "Summarizes scanned material (diffs, release notes) into signals.",
   },
   {
-    functionality: "signal_evaluation",
-    label: "Signal evaluation",
-    description: "Judges a signal's relevance for each project.",
-  },
-  {
-    functionality: "content_suggestion",
-    label: "Content suggestion",
-    description: "Drafts the four-part suggestion.",
-  },
-  {
-    functionality: "content_draft",
-    label: "Content draft",
-    description: "Writes the actual file contents for accepted suggestions.",
-  },
-  {
     functionality: "scan_briefing",
     label: "Scan briefing",
     description:
-      "AI-briefing web hunts (used from Phase 7; grok models add real-time web and X search).",
+      "AI-briefing web hunts (grok models add real-time web and X search).",
   },
 ];
 
@@ -100,11 +86,11 @@ export default async function SettingsPage() {
             {ctx.isAdmin ? (
               <ActionForm action={updateModelRoutingAction} requireDirty>
                 {MODEL_SETTINGS.map(({ functionality, label, description }) => (
-                  <label key={functionality} className="block">
-                    <span className={LABEL_CLASSES}>
-                      {label}
-                      <span className="ml-1.5 text-faint">{description}</span>
-                    </span>
+                  <FormField
+                    key={functionality}
+                    label={label}
+                    description={description}
+                  >
                     {availableModels.length > 0 ? (
                       <select
                         name={`model_${functionality}`}
@@ -128,7 +114,7 @@ export default async function SettingsPage() {
                         className={INPUT_CLASSES}
                       />
                     )}
-                  </label>
+                  </FormField>
                 ))}
               </ActionForm>
             ) : (

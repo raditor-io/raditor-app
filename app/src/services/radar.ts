@@ -1,12 +1,13 @@
 /**
- * Radar service (scan-centric model): radars are project-bound missions with
- * a prose directive, targets, and enabled scan strategies. Reads for
- * members, configuration writes admin-only. Inbox/scan/output writes happen
- * in jobs via the service role.
+ * Radar service (radars are the org-bound, top-level unit): a radar is one
+ * monitored matter with a prose directive, optional targets, and enabled
+ * scan strategies. Reads for members, configuration writes admin-only.
+ * Inbox/scan/output/signal writes happen in jobs via the service role.
  */
 import type { Database, Json } from "@/lib/database.types";
 import { listInstallationRepos, type GithubRepo } from "@/github/api";
-import type { WatchConfigInput } from "@/lib/schemas/project-config";
+import { pageRange, type ListParams } from "@/lib/list-params";
+import { slugify, type WatchConfigInput } from "@/lib/schemas/radar-config";
 import { serverClient } from "@/lib/supabase/server";
 import { recordEvent } from "@/services/record-event";
 import { requireAdminContext, requireOrgContext } from "@/services/org";
@@ -15,30 +16,31 @@ export type RadarRow = Database["public"]["Tables"]["radars"]["Row"];
 export type RadarTargetRow = Database["public"]["Tables"]["radar_targets"]["Row"];
 export type ScanRow = Database["public"]["Tables"]["scans"]["Row"];
 export type SignalRow = Database["public"]["Tables"]["signals"]["Row"];
-export type EvaluationRow =
-  Database["public"]["Tables"]["signal_evaluations"]["Row"];
 export type InstallationRow =
   Database["public"]["Tables"]["github_installations"]["Row"];
 
 export const SCAN_STRATEGIES = [
   "ai_briefing",
-  "fetched_websites",
   "target_emitted_events",
 ] as const;
 export type ScanStrategy = (typeof SCAN_STRATEGIES)[number];
 
-/** Strategies that execute today; the others land in Phase 7. */
-export const ACTIVE_SCAN_STRATEGIES: ScanStrategy[] = ["target_emitted_events"];
+/**
+ * Briefing scans burn web-search tokens on every run; radars that only hunt
+ * the web default to a generous interval (6h). Event-driven radars keep the
+ * DB default (30m sweep as an inbox backstop).
+ */
+const BRIEFING_ONLY_INTERVAL_MINUTES = 360;
 
 // --- Radars -------------------------------------------------------------------
 
-export async function listRadars(projectId: string): Promise<RadarRow[]> {
-  await requireOrgContext();
+export async function listRadars(): Promise<RadarRow[]> {
+  const ctx = await requireOrgContext();
   const supabase = await serverClient();
   const { data, error } = await supabase
     .from("radars")
     .select("*")
-    .eq("project_id", projectId)
+    .eq("organization_id", ctx.organization.id)
     .eq("is_active", true)
     .order("created_at", { ascending: true });
   if (error) throw error;
@@ -58,7 +60,6 @@ export async function getRadar(radarId: string): Promise<RadarRow | null> {
 }
 
 export interface CreateRadarInput {
-  projectId: string;
   name: string;
   directiveMd: string;
   scanStrategies: ScanStrategy[];
@@ -73,14 +74,33 @@ export async function createRadar(input: CreateRadarInput): Promise<RadarRow> {
   const ctx = await requireAdminContext();
   const supabase = await serverClient();
 
+  const base = slugify(input.name);
+  // Suffix on collision; two attempts is plenty at MVP scale.
+  const { data: existing } = await supabase
+    .from("radars")
+    .select("slug")
+    .eq("organization_id", ctx.organization.id)
+    .eq("slug", base)
+    .maybeSingle();
+  const slug = existing
+    ? `${base}-${Math.random().toString(36).slice(2, 6)}`
+    : base;
+
+  const isBriefingOnly =
+    input.scanStrategies.length === 1 &&
+    input.scanStrategies[0] === "ai_briefing";
+
   const { data: radar, error } = await supabase
     .from("radars")
     .insert({
       organization_id: ctx.organization.id,
-      project_id: input.projectId,
       name: input.name,
+      slug,
       directive_md: input.directiveMd,
       scan_strategies: input.scanStrategies,
+      ...(isBriefingOnly
+        ? { scan_interval_minutes: BRIEFING_ONLY_INTERVAL_MINUTES }
+        : {}),
     })
     .select("*")
     .single();
@@ -97,7 +117,7 @@ export async function createRadar(input: CreateRadarInput): Promise<RadarRow> {
     subjectId: radar.id,
     actorKind: "user",
     actorId: ctx.user.id,
-    payload: { project_id: input.projectId, name: input.name },
+    payload: { name: input.name, slug },
   });
 
   return radar;
@@ -218,37 +238,86 @@ export async function listScans(radarId: string, limit = 20): Promise<ScanRow[]>
   return data;
 }
 
-// --- Signals + evaluations (reads, unchanged shape) ---------------------------
+// --- Signals (reads) ----------------------------------------------------------
 
-export async function listSignals(limit = 50): Promise<SignalRow[]> {
+export async function listSignals(options?: {
+  radarId?: string;
+  limit?: number;
+}): Promise<SignalRow[]> {
   const ctx = await requireOrgContext();
   const supabase = await serverClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("signals")
     .select("*")
     .eq("organization_id", ctx.organization.id)
     .order("created_at", { ascending: false })
-    .limit(limit);
+    .limit(options?.limit ?? 50);
+  if (options?.radarId) query = query.eq("radar_id", options.radarId);
+  const { data, error } = await query;
   if (error) throw error;
   return data;
 }
 
-export async function listEvaluations(options: {
-  projectId?: string;
-  signalIds?: string[];
-}): Promise<EvaluationRow[]> {
+/** Escape ilike wildcards in user search input. */
+function likePattern(q: string): string {
+  return `%${q.replace(/[%_]/g, "\\$&")}%`;
+}
+
+export interface PagedResult<T> {
+  rows: T[];
+  total: number;
+}
+
+export async function listRadarsPaged(params: ListParams): Promise<
+  PagedResult<RadarRow>
+> {
+  const ctx = await requireOrgContext();
+  const supabase = await serverClient();
+  const { from, to } = pageRange(params);
+  let query = supabase
+    .from("radars")
+    .select("*", { count: "exact" })
+    .eq("organization_id", ctx.organization.id)
+    .eq("is_active", true)
+    .order("created_at", { ascending: true })
+    .range(from, to);
+  if (params.q) query = query.ilike("name", likePattern(params.q));
+  const { data, error, count } = await query;
+  if (error) throw error;
+  return { rows: data ?? [], total: count ?? 0 };
+}
+
+export async function listSignalsPaged(
+  radarId: string,
+  params: ListParams,
+): Promise<PagedResult<SignalRow>> {
   await requireOrgContext();
   const supabase = await serverClient();
+  const { from, to } = pageRange(params);
   let query = supabase
-    .from("signal_evaluations")
-    .select("*")
+    .from("signals")
+    .select("*", { count: "exact" })
+    .eq("radar_id", radarId)
     .order("created_at", { ascending: false })
-    .limit(200);
-  if (options.projectId) query = query.eq("project_id", options.projectId);
-  if (options.signalIds?.length) query = query.in("signal_id", options.signalIds);
-  const { data, error } = await query;
+    .range(from, to);
+  if (params.q) query = query.ilike("title", likePattern(params.q));
+  if (params.kind) query = query.eq("kind", params.kind);
+  const { data, error, count } = await query;
   if (error) throw error;
-  return data;
+  return { rows: data ?? [], total: count ?? 0 };
+}
+
+/** Distinct signal kinds of one radar (filter options). */
+export async function listSignalKinds(radarId: string): Promise<string[]> {
+  await requireOrgContext();
+  const supabase = await serverClient();
+  const { data, error } = await supabase
+    .from("signals")
+    .select("kind")
+    .eq("radar_id", radarId)
+    .limit(1000);
+  if (error) throw error;
+  return [...new Set((data ?? []).map((row) => row.kind))].sort();
 }
 
 // --- GitHub repo discovery (for target pickers) -------------------------------

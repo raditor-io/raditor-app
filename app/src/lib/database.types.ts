@@ -42,7 +42,6 @@ export type Database = {
       ai_usage_events: {
         Row: {
           created_at: string
-          editor_agent_id: string | null
           estimated_cost_usd: number
           functionality: string
           id: string
@@ -51,14 +50,11 @@ export type Database = {
           model: string
           organization_id: string
           output_tokens: number
-          project_id: string | null
           provider: string
           scan_id: string | null
-          suggestion_id: string | null
         }
         Insert: {
           created_at?: string
-          editor_agent_id?: string | null
           estimated_cost_usd?: number
           functionality: string
           id?: string
@@ -67,14 +63,11 @@ export type Database = {
           model: string
           organization_id: string
           output_tokens?: number
-          project_id?: string | null
           provider?: string
           scan_id?: string | null
-          suggestion_id?: string | null
         }
         Update: {
           created_at?: string
-          editor_agent_id?: string | null
           estimated_cost_usd?: number
           functionality?: string
           id?: string
@@ -83,180 +76,12 @@ export type Database = {
           model?: string
           organization_id?: string
           output_tokens?: number
-          project_id?: string | null
           provider?: string
           scan_id?: string | null
-          suggestion_id?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "ai_usage_events_editor_agent_id_fkey"
-            columns: ["editor_agent_id"]
-            isOneToOne: false
-            referencedRelation: "editor_agents"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "ai_usage_events_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ai_usage_events_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ai_usage_events_suggestion_id_fkey"
-            columns: ["suggestion_id"]
-            isOneToOne: false
-            referencedRelation: "suggestions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      content_drafts: {
-        Row: {
-          base_git_blob_sha: string | null
-          committed_git_blob_sha: string | null
-          created_at: string
-          draft_content: string
-          file_path: string
-          id: string
-          organization_id: string
-          project_id: string
-          suggestion_id: string
-          updated_at: string
-        }
-        Insert: {
-          base_git_blob_sha?: string | null
-          committed_git_blob_sha?: string | null
-          created_at?: string
-          draft_content?: string
-          file_path: string
-          id?: string
-          organization_id: string
-          project_id: string
-          suggestion_id: string
-          updated_at?: string
-        }
-        Update: {
-          base_git_blob_sha?: string | null
-          committed_git_blob_sha?: string | null
-          created_at?: string
-          draft_content?: string
-          file_path?: string
-          id?: string
-          organization_id?: string
-          project_id?: string
-          suggestion_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "content_drafts_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "content_drafts_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "content_drafts_suggestion_id_fkey"
-            columns: ["suggestion_id"]
-            isOneToOne: false
-            referencedRelation: "suggestions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      editor_agent_assignments: {
-        Row: {
-          created_at: string
-          editor_agent_id: string
-          id: string
-          organization_id: string
-          project_id: string
-        }
-        Insert: {
-          created_at?: string
-          editor_agent_id: string
-          id?: string
-          organization_id: string
-          project_id: string
-        }
-        Update: {
-          created_at?: string
-          editor_agent_id?: string
-          id?: string
-          organization_id?: string
-          project_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "editor_agent_assignments_editor_agent_id_fkey"
-            columns: ["editor_agent_id"]
-            isOneToOne: false
-            referencedRelation: "editor_agents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "editor_agent_assignments_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "editor_agent_assignments_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      editor_agents: {
-        Row: {
-          created_at: string
-          display_name: string
-          id: string
-          model_config: Json
-          organization_id: string
-          persona_md: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          display_name: string
-          id?: string
-          model_config?: Json
-          organization_id: string
-          persona_md?: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          display_name?: string
-          id?: string
-          model_config?: Json
-          organization_id?: string
-          persona_md?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "editor_agents_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -308,6 +133,206 @@ export type Database = {
           },
         ]
       }
+      feed_item_deliveries: {
+        Row: {
+          attempt_count: number
+          created_at: string
+          delivered_at: string | null
+          error_message: string | null
+          feed_item_id: number
+          id: string
+          last_attempted_at: string | null
+          organization_id: string
+          status: string
+          subscription_id: string
+        }
+        Insert: {
+          attempt_count?: number
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          feed_item_id: number
+          id?: string
+          last_attempted_at?: string | null
+          organization_id: string
+          status?: string
+          subscription_id: string
+        }
+        Update: {
+          attempt_count?: number
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          feed_item_id?: number
+          id?: string
+          last_attempted_at?: string | null
+          organization_id?: string
+          status?: string
+          subscription_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feed_item_deliveries_feed_item_id_fkey"
+            columns: ["feed_item_id"]
+            isOneToOne: false
+            referencedRelation: "feed_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feed_item_deliveries_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feed_item_deliveries_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feed_items: {
+        Row: {
+          added_at: string
+          feed_id: string
+          id: number
+          organization_id: string
+          signal_id: string
+        }
+        Insert: {
+          added_at?: string
+          feed_id: string
+          id?: never
+          organization_id: string
+          signal_id: string
+        }
+        Update: {
+          added_at?: string
+          feed_id?: string
+          id?: never
+          organization_id?: string
+          signal_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feed_items_feed_id_fkey"
+            columns: ["feed_id"]
+            isOneToOne: false
+            referencedRelation: "feeds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feed_items_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feed_items_signal_id_fkey"
+            columns: ["signal_id"]
+            isOneToOne: false
+            referencedRelation: "signals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feed_radars: {
+        Row: {
+          created_at: string
+          feed_id: string
+          id: string
+          organization_id: string
+          radar_id: string
+        }
+        Insert: {
+          created_at?: string
+          feed_id: string
+          id?: string
+          organization_id: string
+          radar_id: string
+        }
+        Update: {
+          created_at?: string
+          feed_id?: string
+          id?: string
+          organization_id?: string
+          radar_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feed_radars_feed_id_fkey"
+            columns: ["feed_id"]
+            isOneToOne: false
+            referencedRelation: "feeds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feed_radars_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feed_radars_radar_id_fkey"
+            columns: ["radar_id"]
+            isOneToOne: false
+            referencedRelation: "radars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feeds: {
+        Row: {
+          created_at: string
+          description_md: string
+          id: string
+          must_include_keywords: string[] | null
+          muted_keywords: string[] | null
+          name: string
+          organization_id: string
+          slug: string
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          created_at?: string
+          description_md?: string
+          id?: string
+          must_include_keywords?: string[] | null
+          muted_keywords?: string[] | null
+          name: string
+          organization_id: string
+          slug: string
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          created_at?: string
+          description_md?: string
+          id?: string
+          must_include_keywords?: string[] | null
+          muted_keywords?: string[] | null
+          name?: string
+          organization_id?: string
+          slug?: string
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feeds_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       github_installations: {
         Row: {
           created_at: string
@@ -348,82 +373,6 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      github_pull_requests: {
-        Row: {
-          branch_name: string
-          closed_at: string | null
-          created_at: string
-          head_commit_sha: string | null
-          id: string
-          is_from_fork: boolean
-          merged_at: string | null
-          opened_at: string
-          organization_id: string
-          pr_number: number
-          project_id: string
-          repo_full_name: string
-          status: string
-          suggestion_id: string
-          updated_at: string
-        }
-        Insert: {
-          branch_name: string
-          closed_at?: string | null
-          created_at?: string
-          head_commit_sha?: string | null
-          id?: string
-          is_from_fork?: boolean
-          merged_at?: string | null
-          opened_at?: string
-          organization_id: string
-          pr_number: number
-          project_id: string
-          repo_full_name: string
-          status?: string
-          suggestion_id: string
-          updated_at?: string
-        }
-        Update: {
-          branch_name?: string
-          closed_at?: string | null
-          created_at?: string
-          head_commit_sha?: string | null
-          id?: string
-          is_from_fork?: boolean
-          merged_at?: string | null
-          opened_at?: string
-          organization_id?: string
-          pr_number?: number
-          project_id?: string
-          repo_full_name?: string
-          status?: string
-          suggestion_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "github_pull_requests_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "github_pull_requests_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "github_pull_requests_suggestion_id_fkey"
-            columns: ["suggestion_id"]
-            isOneToOne: false
-            referencedRelation: "suggestions"
             referencedColumns: ["id"]
           },
         ]
@@ -570,134 +519,6 @@ export type Database = {
         }
         Relationships: []
       }
-      project_goals: {
-        Row: {
-          body_md: string
-          created_at: string
-          goal_key: string | null
-          id: string
-          is_active: boolean
-          organization_id: string
-          priority: number
-          project_id: string
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          body_md?: string
-          created_at?: string
-          goal_key?: string | null
-          id?: string
-          is_active?: boolean
-          organization_id: string
-          priority?: number
-          project_id: string
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          body_md?: string
-          created_at?: string
-          goal_key?: string | null
-          id?: string
-          is_active?: boolean
-          organization_id?: string
-          priority?: number
-          project_id?: string
-          title?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "project_goals_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "project_goals_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      projects: {
-        Row: {
-          created_at: string
-          deploy_base_branch: string
-          deploy_github_installation_id: number | null
-          deploy_path_allowlist: string[]
-          deploy_pr_mode: string
-          deploy_repo_full_name: string | null
-          display_name: string
-          do_not_write_md: string
-          editorial_memory_md: string
-          i18n_config: Json
-          id: string
-          max_suggestions_per_interval: number
-          organization_id: string
-          purpose_md: string
-          site_type: string
-          slug: string
-          suggestion_interval: string
-          updated_at: string
-          url_mapping_config: Json
-        }
-        Insert: {
-          created_at?: string
-          deploy_base_branch?: string
-          deploy_github_installation_id?: number | null
-          deploy_path_allowlist?: string[]
-          deploy_pr_mode?: string
-          deploy_repo_full_name?: string | null
-          display_name: string
-          do_not_write_md?: string
-          editorial_memory_md?: string
-          i18n_config?: Json
-          id?: string
-          max_suggestions_per_interval?: number
-          organization_id: string
-          purpose_md?: string
-          site_type?: string
-          slug: string
-          suggestion_interval?: string
-          updated_at?: string
-          url_mapping_config?: Json
-        }
-        Update: {
-          created_at?: string
-          deploy_base_branch?: string
-          deploy_github_installation_id?: number | null
-          deploy_path_allowlist?: string[]
-          deploy_pr_mode?: string
-          deploy_repo_full_name?: string | null
-          display_name?: string
-          do_not_write_md?: string
-          editorial_memory_md?: string
-          i18n_config?: Json
-          id?: string
-          max_suggestions_per_interval?: number
-          organization_id?: string
-          purpose_md?: string
-          site_type?: string
-          slug?: string
-          suggestion_interval?: string
-          updated_at?: string
-          url_mapping_config?: Json
-        }
-        Relationships: [
-          {
-            foreignKeyName: "projects_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       provider_credentials: {
         Row: {
           created_at: string
@@ -738,77 +559,6 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      radar_target_events: {
-        Row: {
-          consumed_by_scan_id: string | null
-          delivery_ref: string | null
-          event_kind: string
-          external_ref: string
-          id: string
-          occurred_at: string
-          organization_id: string
-          payload: Json
-          radar_id: string
-          radar_target_id: string
-          received_at: string
-        }
-        Insert: {
-          consumed_by_scan_id?: string | null
-          delivery_ref?: string | null
-          event_kind: string
-          external_ref: string
-          id?: string
-          occurred_at?: string
-          organization_id: string
-          payload?: Json
-          radar_id: string
-          radar_target_id: string
-          received_at?: string
-        }
-        Update: {
-          consumed_by_scan_id?: string | null
-          delivery_ref?: string | null
-          event_kind?: string
-          external_ref?: string
-          id?: string
-          occurred_at?: string
-          organization_id?: string
-          payload?: Json
-          radar_id?: string
-          radar_target_id?: string
-          received_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "radar_target_events_consumed_fk"
-            columns: ["consumed_by_scan_id"]
-            isOneToOne: false
-            referencedRelation: "scans"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "radar_target_events_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "radar_target_events_radar_id_fkey"
-            columns: ["radar_id"]
-            isOneToOne: false
-            referencedRelation: "radars"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "radar_target_events_radar_target_id_fkey"
-            columns: ["radar_target_id"]
-            isOneToOne: false
-            referencedRelation: "radar_targets"
             referencedColumns: ["id"]
           },
         ]
@@ -879,9 +629,9 @@ export type Database = {
           last_scanned_at: string | null
           name: string
           organization_id: string
-          project_id: string
           scan_interval_minutes: number
           scan_strategies: string[]
+          slug: string
           updated_at: string
         }
         Insert: {
@@ -892,9 +642,9 @@ export type Database = {
           last_scanned_at?: string | null
           name: string
           organization_id: string
-          project_id: string
           scan_interval_minutes?: number
           scan_strategies?: string[]
+          slug: string
           updated_at?: string
         }
         Update: {
@@ -905,9 +655,9 @@ export type Database = {
           last_scanned_at?: string | null
           name?: string
           organization_id?: string
-          project_id?: string
           scan_interval_minutes?: number
           scan_strategies?: string[]
+          slug?: string
           updated_at?: string
         }
         Relationships: [
@@ -916,13 +666,6 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "radars_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
@@ -1019,6 +762,7 @@ export type Database = {
       }
       scans: {
         Row: {
+          error_message: string | null
           finished_at: string | null
           id: string
           organization_id: string
@@ -1027,9 +771,11 @@ export type Database = {
           stats: Json
           status: string
           strategies_used: string[]
+          summary_md: string
           trigger: string
         }
         Insert: {
+          error_message?: string | null
           finished_at?: string | null
           id?: string
           organization_id: string
@@ -1038,9 +784,11 @@ export type Database = {
           stats?: Json
           status?: string
           strategies_used?: string[]
+          summary_md?: string
           trigger?: string
         }
         Update: {
+          error_message?: string | null
           finished_at?: string | null
           id?: string
           organization_id?: string
@@ -1049,6 +797,7 @@ export type Database = {
           stats?: Json
           status?: string
           strategies_used?: string[]
+          summary_md?: string
           trigger?: string
         }
         Relationships: [
@@ -1068,125 +817,60 @@ export type Database = {
           },
         ]
       }
-      signal_evaluations: {
-        Row: {
-          created_at: string
-          editor_agent_id: string | null
-          error_message: string | null
-          evaluated_at: string | null
-          id: string
-          organization_id: string
-          project_id: string
-          rationale_md: string
-          relevance_score: number | null
-          signal_id: string
-          status: string
-          suggestion_id: string | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          editor_agent_id?: string | null
-          error_message?: string | null
-          evaluated_at?: string | null
-          id?: string
-          organization_id: string
-          project_id: string
-          rationale_md?: string
-          relevance_score?: number | null
-          signal_id: string
-          status?: string
-          suggestion_id?: string | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          editor_agent_id?: string | null
-          error_message?: string | null
-          evaluated_at?: string | null
-          id?: string
-          organization_id?: string
-          project_id?: string
-          rationale_md?: string
-          relevance_score?: number | null
-          signal_id?: string
-          status?: string
-          suggestion_id?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "signal_evaluations_editor_agent_id_fkey"
-            columns: ["editor_agent_id"]
-            isOneToOne: false
-            referencedRelation: "editor_agents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "signal_evaluations_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "signal_evaluations_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "signal_evaluations_signal_id_fkey"
-            columns: ["signal_id"]
-            isOneToOne: false
-            referencedRelation: "signals"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       signals: {
         Row: {
-          cluster_key: string
+          body_md: string
           created_at: string
+          custom_data: Json | null
+          dedup_key: string
           evidence: Json
           has_suspicious_content: boolean
           id: string
+          kind: string
+          occurred_at: string
           organization_id: string
+          radar_id: string
+          signed_event: Json | null
           status: string
           summary_md: string
           title: string
           updated_at: string
-          window_ended_at: string
-          window_started_at: string
         }
         Insert: {
-          cluster_key: string
+          body_md?: string
           created_at?: string
+          custom_data?: Json | null
+          dedup_key: string
           evidence?: Json
           has_suspicious_content?: boolean
           id?: string
+          kind: string
+          occurred_at?: string
           organization_id: string
+          radar_id: string
+          signed_event?: Json | null
           status?: string
           summary_md?: string
           title: string
           updated_at?: string
-          window_ended_at?: string
-          window_started_at?: string
         }
         Update: {
-          cluster_key?: string
+          body_md?: string
           created_at?: string
+          custom_data?: Json | null
+          dedup_key?: string
           evidence?: Json
           has_suspicious_content?: boolean
           id?: string
+          kind?: string
+          occurred_at?: string
           organization_id?: string
+          radar_id?: string
+          signed_event?: Json | null
           status?: string
           summary_md?: string
           title?: string
           updated_at?: string
-          window_ended_at?: string
-          window_started_at?: string
         }
         Relationships: [
           {
@@ -1196,96 +880,172 @@ export type Database = {
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "signals_radar_id_fkey"
+            columns: ["radar_id"]
+            isOneToOne: false
+            referencedRelation: "radars"
+            referencedColumns: ["id"]
+          },
         ]
       }
-      suggestions: {
+      subscriptions: {
         Row: {
+          api_token_hash: string | null
+          api_token_prefix: string | null
           created_at: string
-          editor_agent_id: string | null
-          graph_impact: Json
-          has_conflict: boolean
-          has_suspicious_source_content: boolean
+          created_by: string | null
+          feed_id: string
           id: string
-          interval_bucket: string
+          is_active: boolean
+          last_acked_feed_item_id: number
+          name: string
           organization_id: string
-          project_id: string
-          reason_md: string
-          recommendation_md: string
-          relevance_score: number | null
-          sibling_group_id: string | null
-          signal_id: string | null
-          signal_summary_md: string
-          status: string
-          title: string
+          subscriber_kind: string
+          transport: string
           updated_at: string
+          user_id: string | null
+          webhook_auth_header_name: string | null
+          webhook_auth_secret_ciphertext: string | null
+          webhook_auth_secret_iv: string | null
+          webhook_body_template: string | null
+          webhook_method: string
+          webhook_secret_ciphertext: string | null
+          webhook_secret_iv: string | null
+          webhook_url: string | null
         }
         Insert: {
+          api_token_hash?: string | null
+          api_token_prefix?: string | null
           created_at?: string
-          editor_agent_id?: string | null
-          graph_impact?: Json
-          has_conflict?: boolean
-          has_suspicious_source_content?: boolean
+          created_by?: string | null
+          feed_id: string
           id?: string
-          interval_bucket: string
+          is_active?: boolean
+          last_acked_feed_item_id?: number
+          name: string
           organization_id: string
-          project_id: string
-          reason_md?: string
-          recommendation_md?: string
-          relevance_score?: number | null
-          sibling_group_id?: string | null
-          signal_id?: string | null
-          signal_summary_md?: string
-          status?: string
-          title?: string
+          subscriber_kind: string
+          transport: string
           updated_at?: string
+          user_id?: string | null
+          webhook_auth_header_name?: string | null
+          webhook_auth_secret_ciphertext?: string | null
+          webhook_auth_secret_iv?: string | null
+          webhook_body_template?: string | null
+          webhook_method?: string
+          webhook_secret_ciphertext?: string | null
+          webhook_secret_iv?: string | null
+          webhook_url?: string | null
         }
         Update: {
+          api_token_hash?: string | null
+          api_token_prefix?: string | null
           created_at?: string
-          editor_agent_id?: string | null
-          graph_impact?: Json
-          has_conflict?: boolean
-          has_suspicious_source_content?: boolean
+          created_by?: string | null
+          feed_id?: string
           id?: string
-          interval_bucket?: string
+          is_active?: boolean
+          last_acked_feed_item_id?: number
+          name?: string
           organization_id?: string
-          project_id?: string
-          reason_md?: string
-          recommendation_md?: string
-          relevance_score?: number | null
-          sibling_group_id?: string | null
-          signal_id?: string | null
-          signal_summary_md?: string
-          status?: string
-          title?: string
+          subscriber_kind?: string
+          transport?: string
           updated_at?: string
+          user_id?: string | null
+          webhook_auth_header_name?: string | null
+          webhook_auth_secret_ciphertext?: string | null
+          webhook_auth_secret_iv?: string | null
+          webhook_body_template?: string | null
+          webhook_method?: string
+          webhook_secret_ciphertext?: string | null
+          webhook_secret_iv?: string | null
+          webhook_url?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "suggestions_editor_agent_id_fkey"
-            columns: ["editor_agent_id"]
+            foreignKeyName: "subscriptions_feed_id_fkey"
+            columns: ["feed_id"]
             isOneToOne: false
-            referencedRelation: "editor_agents"
+            referencedRelation: "feeds"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "suggestions_organization_id_fkey"
+            foreignKeyName: "subscriptions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      target_events: {
+        Row: {
+          consumed_by_scan_id: string | null
+          delivery_ref: string | null
+          event_kind: string
+          external_ref: string
+          id: string
+          occurred_at: string
+          organization_id: string
+          payload: Json
+          radar_id: string
+          radar_target_id: string
+          received_at: string
+        }
+        Insert: {
+          consumed_by_scan_id?: string | null
+          delivery_ref?: string | null
+          event_kind: string
+          external_ref: string
+          id?: string
+          occurred_at?: string
+          organization_id: string
+          payload?: Json
+          radar_id: string
+          radar_target_id: string
+          received_at?: string
+        }
+        Update: {
+          consumed_by_scan_id?: string | null
+          delivery_ref?: string | null
+          event_kind?: string
+          external_ref?: string
+          id?: string
+          occurred_at?: string
+          organization_id?: string
+          payload?: Json
+          radar_id?: string
+          radar_target_id?: string
+          received_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "target_events_consumed_fk"
+            columns: ["consumed_by_scan_id"]
+            isOneToOne: false
+            referencedRelation: "scans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "target_events_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "suggestions_project_id_fkey"
-            columns: ["project_id"]
+            foreignKeyName: "target_events_radar_id_fkey"
+            columns: ["radar_id"]
             isOneToOne: false
-            referencedRelation: "projects"
+            referencedRelation: "radars"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "suggestions_signal_id_fkey"
-            columns: ["signal_id"]
+            foreignKeyName: "target_events_radar_target_id_fkey"
+            columns: ["radar_target_id"]
             isOneToOne: false
-            referencedRelation: "signals"
+            referencedRelation: "radar_targets"
             referencedColumns: ["id"]
           },
         ]

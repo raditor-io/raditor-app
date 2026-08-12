@@ -1,7 +1,6 @@
 /**
- * Radar queue worker: executes queued radar jobs (run_scan, evaluate_signal)
- * and nothing else — each queue gets its own domain route (Phase 4 adds
- * /api/jobs/publish/process for the publish queue). Vercel cron calls
+ * Radar queue worker: executes queued radar jobs (run_scan) and nothing
+ * else — each queue gets its own domain route. Vercel cron calls
  * GET /api/jobs/radar/process every minute with Authorization: Bearer
  * CRON_SECRET; self-hosters point any cron at the same URL. Long maxDuration
  * via fluid compute; the loop stops with time to spare so the function never
@@ -15,6 +14,7 @@ import {
   MAX_ATTEMPTS,
   readJobBatch,
   recordJobFailure,
+  SCAN_VISIBILITY_TIMEOUT_SECONDS,
   type QueueName,
 } from "@/jobs/queue";
 import { dispatch } from "@/jobs/registry";
@@ -41,7 +41,11 @@ async function processQueue(request: NextRequest) {
   let deadLettered = 0;
 
   while (Date.now() - startedAt < TIME_BUDGET_MS) {
-    const batch = await readJobBatch(queue, BATCH_SIZE);
+    const batch = await readJobBatch(
+      queue,
+      BATCH_SIZE,
+      SCAN_VISIBILITY_TIMEOUT_SECONDS,
+    );
     if (batch.length === 0) break;
 
     for (const message of batch) {

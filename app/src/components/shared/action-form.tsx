@@ -85,5 +85,6 @@ export function ActionForm({
   );
 }
 
-// INPUT_CLASSES / LABEL_CLASSES moved to ./form-styles (a plain module):
-// server components must not import values through this "use client" file.
+// INPUT_CLASSES lives in ./form-styles and field rows in ./form-field (plain
+// modules): server components must not import values through this
+// "use client" file.

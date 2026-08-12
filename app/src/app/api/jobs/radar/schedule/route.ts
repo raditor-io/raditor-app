@@ -1,10 +1,9 @@
 /**
  * Scheduler: checks the clock and enqueues whatever became due — run_scan
- * for interval-due radars, backstop scans for radars with unconsumed inbox
- * events (covers a lost event-triggered enqueue), and re-enqueued
- * cadence-deferred evaluations. Performs no processing itself; the
- * /api/jobs/radar/process endpoint executes the queue. Called by Vercel
- * cron (GET, Bearer CRON_SECRET).
+ * for interval-due radars and backstop scans for radars with unconsumed
+ * inbox events (covers a lost event-triggered enqueue). Performs no
+ * processing itself; the /api/jobs/radar/process endpoint executes the
+ * queue. Called by Vercel cron (GET, Bearer CRON_SECRET).
  */
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -42,7 +41,7 @@ async function schedule(request: NextRequest) {
 
   // Backstop: unconsumed inbox events whose event-triggered scan got lost.
   const { data: pendingEvents } = await admin
-    .from("radar_target_events")
+    .from("target_events")
     .select("radar_id")
     .is("consumed_by_scan_id", null)
     .limit(500);
@@ -52,22 +51,8 @@ async function schedule(request: NextRequest) {
     await enqueueJob("radar", "run_scan", { radarId, trigger: "interval" });
   }
 
-  // Cadence-deferred evaluations retry on every scheduler run.
-  const { data: deferred } = await admin
-    .from("signal_evaluations")
-    .select("signal_id, project_id")
-    .eq("status", "deferred")
-    .limit(200);
-  for (const row of deferred ?? []) {
-    await enqueueJob("radar", "evaluate_signal", {
-      signalId: row.signal_id,
-      projectId: row.project_id,
-    });
-  }
-
   return NextResponse.json({
     scans_enqueued: scanRadarIds.size,
-    deferred_retried: deferred?.length ?? 0,
   });
 }
 

@@ -1,10 +1,11 @@
 "use client";
 
 /**
- * Vercel-style modal: dimmed backdrop, centered panel with title and
- * description, closes on Escape or backdrop click. Content (including the
- * footer buttons) comes from children.
+ * Vercel-style modal: dimmed backdrop, centered panel with title,
+ * description, and an X close button; closes on Escape, backdrop click, or
+ * the X. Content (including the footer buttons) comes from children.
  */
+import { IconX } from "@tabler/icons-react";
 import { useEffect } from "react";
 
 export interface ModalProps {
@@ -42,10 +43,18 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="w-full max-w-lg rounded-lg border border-border bg-surface p-6 shadow-xl"
+        className="relative w-full max-w-lg rounded-lg border border-border bg-surface p-6 shadow-xl"
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute right-4 top-4 flex size-8 cursor-pointer items-center justify-center rounded-md text-muted transition-colors hover:bg-hover hover:text-foreground"
+        >
+          <IconX size={17} stroke={1.75} />
+        </button>
+        <h2 className="pr-8 text-lg font-semibold text-foreground">{title}</h2>
         {description ? (
           <p className="mt-2 text-sm text-muted">{description}</p>
         ) : null}

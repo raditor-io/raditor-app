@@ -33,22 +33,48 @@ export class VeniceProvider implements AiProvider {
   }
 
   async chat(request: ChatRequest): Promise<ChatResult> {
-    const response = await this.fetchImpl(`${this.baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-        "Content-Type": "application/json",
-      },
-      // isJsonResponse is intentionally NOT mapped to response_format: several
-      // Venice models reject it with a 400. JSON output is enforced by the
-      // prompts and recovered by parseJsonResponse instead.
-      body: JSON.stringify({
-        model: request.model,
-        messages: request.messages,
-        temperature: request.temperature ?? 0.4,
-        max_completion_tokens: request.maxTokens,
-      }),
-    });
+    // isJsonResponse is intentionally NOT mapped to response_format: several
+    // Venice models reject it with a 400. JSON output is enforced by the
+    // prompts and recovered by parseJsonResponse instead.
+    const baseBody = {
+      model: request.model,
+      messages: request.messages,
+      temperature: request.temperature ?? 0.4,
+      max_completion_tokens: request.maxTokens,
+    };
+    const withWebSearch = request.isWebSearchEnabled === true;
+
+    const post = (body: Record<string, unknown>) =>
+      this.fetchImpl(`${this.baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+    let response = await post(
+      withWebSearch
+        ? {
+            ...baseBody,
+            venice_parameters: {
+              enable_web_search: "on",
+              enable_web_citations: true,
+            },
+          }
+        : baseBody,
+    );
+
+    // Degrade gracefully when a model rejects venice_parameters: retry once
+    // without web search (grok has native live search; evidence-free findings
+    // are dropped downstream either way).
+    if (!response.ok && response.status === 400 && withWebSearch) {
+      console.warn(
+        `[venice] ${request.model} rejected venice_parameters; retrying without web search`,
+      );
+      response = await post(baseBody);
+    }
 
     if (!response.ok) {
       const body = await response.text().catch(() => "");

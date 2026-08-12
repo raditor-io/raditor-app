@@ -2,6 +2,6 @@
   "crons": [
     { "path": "/api/jobs/radar/schedule", "schedule": "*/5 * * * *" },
     { "path": "/api/jobs/radar/process", "schedule": "* * * * *" },
-    { "path": "/api/jobs/publish/process", "schedule": "* * * * *" }
+    { "path": "/api/jobs/deliver/process", "schedule": "* * * * *" }
   ]
 }

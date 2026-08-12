@@ -7,13 +7,7 @@ import type { ActionResult } from "@/components/shared/action-form";
 import { errorMessage } from "@/lib/error-message";
 import { updateModelRouting } from "@/services/org";
 
-const CONFIGURABLE_FUNCTIONALITIES = [
-  "scan_summary",
-  "scan_briefing",
-  "signal_evaluation",
-  "content_suggestion",
-  "content_draft",
-] as const;
+const CONFIGURABLE_FUNCTIONALITIES = ["scan_summary", "scan_briefing"] as const;
 
 const modelIdSchema = z
   .string()

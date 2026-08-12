@@ -8,13 +8,7 @@
 
 export type AiFunctionality =
   | "scan_summary" // summarize scan material (diffs, release notes) into signal summaries
-  | "scan_briefing" // AI-briefing hunts via web/X search (executes from Phase 7)
-  | "signal_evaluation" // per-project relevance judgment of a signal
-  | "content_suggestion" // the four-part suggestion draft
-  | "content_draft" // rendering actual file contents for accepted suggestions
-  | "translation" // locale fan-out (Phase 6)
-  | "draft_critique" // challenge mode (Phase 8)
-  | "eval_judgement"; // eval harness rubric judge (Phase 8)
+  | "scan_briefing"; // AI-briefing hunts via provider web search
 
 export interface ChatMessage {
   role: "system" | "user" | "assistant";
@@ -28,6 +22,8 @@ export interface ChatRequest {
   maxTokens?: number;
   /** Ask the provider for a JSON object response when supported. */
   isJsonResponse?: boolean;
+  /** Ask the provider to ground the completion with live web search. */
+  isWebSearchEnabled?: boolean;
 }
 
 export interface ChatUsage {

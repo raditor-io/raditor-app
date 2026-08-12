@@ -1,9 +1,10 @@
 "use client";
 
 /**
- * Top-bar breadcrumbs (dodi-style): organization first, then on project
- * routes the project crumb with a switcher popover, then the section trail
- * from build-crumbs. Crumbs replace per-page content titles.
+ * Top-bar breadcrumbs (dodi-style): on radar routes the radar crumb with a
+ * switcher popover, then the section trail from build-crumbs. The
+ * organization lives in the sidebar next to the signet, not in the trail.
+ * Crumbs replace per-page content titles.
  */
 import {
   IconCheck,
@@ -18,46 +19,25 @@ import {
   useBreadcrumbContext,
   type BreadcrumbProject,
 } from "@/components/shared/breadcrumb-context";
-import { activeProjectId, buildCrumbs } from "@/components/shared/build-crumbs";
+import { activeRadarId, buildCrumbs } from "@/components/shared/build-crumbs";
 
-export interface BreadcrumbsProps {
-  organizationName: string;
-}
-
-export function Breadcrumbs({ organizationName }: BreadcrumbsProps) {
+export function Breadcrumbs() {
   const pathname = usePathname();
   const { project, projects } = useBreadcrumbContext();
   const crumbs = buildCrumbs(pathname);
-  const projectId = activeProjectId(pathname);
-  const showProjectCrumb = projectId !== null && project?.id === projectId;
-  const isOrgLeaf = crumbs.length === 0 && !showProjectCrumb;
+  const radarId = activeRadarId(pathname);
+  const showProjectCrumb = radarId !== null && project?.id === radarId;
 
   return (
     <nav
       aria-label="Breadcrumb"
       className="flex min-w-0 items-center gap-1.5 text-sm"
     >
-      <Link
-        href="/"
-        className={
-          isOrgLeaf
-            ? "truncate font-medium text-foreground"
-            : "truncate font-medium text-muted transition-colors hover:text-foreground"
-        }
-      >
-        {organizationName}
-      </Link>
-
       {showProjectCrumb ? (
         <div className="flex min-w-0 items-center gap-1.5">
-          <IconChevronRight
-            size={16}
-            stroke={1.75}
-            className="shrink-0 text-faint"
-          />
           {crumbs.length > 0 ? (
             <Link
-              href={`/projects/${project.id}`}
+              href={`/radars/${project.id}`}
               className="truncate font-medium text-muted transition-colors hover:text-foreground"
             >
               {project.name}
@@ -81,11 +61,13 @@ export function Breadcrumbs({ organizationName }: BreadcrumbsProps) {
         const isLast = i === crumbs.length - 1;
         return (
           <div key={i} className="flex min-w-0 items-center gap-1.5">
-            <IconChevronRight
-              size={16}
-              stroke={1.75}
-              className="shrink-0 text-faint"
-            />
+            {i > 0 || showProjectCrumb ? (
+              <IconChevronRight
+                size={16}
+                stroke={1.75}
+                className="shrink-0 text-faint"
+              />
+            ) : null}
             {crumb.href && !isLast ? (
               <Link
                 href={crumb.href}
@@ -112,9 +94,8 @@ export function Breadcrumbs({ organizationName }: BreadcrumbsProps) {
 }
 
 /**
- * Compact popover that swaps the project id in the current path, keeping the
- * sub-route (so /projects/[id]/radar stays on radar). Outside-click/Escape
- * pattern mirrored from dodi's kid switcher.
+ * Compact popover that swaps the radar id in the current path, keeping the
+ * sub-route. Outside-click/Escape pattern mirrored from dodi's kid switcher.
  */
 function ProjectSwitcher({
   projects,
@@ -150,7 +131,7 @@ function ProjectSwitcher({
   function pick(projectId: string) {
     setIsOpen(false);
     if (projectId === activeId) return;
-    router.push(pathname.replace(/(\/projects\/)[^/]+/, `$1${projectId}`));
+    router.push(pathname.replace(/(\/radars\/)[^/]+/, `$1${projectId}`));
   }
 
   return (
@@ -158,7 +139,7 @@ function ProjectSwitcher({
       <button
         type="button"
         onClick={() => setIsOpen((v) => !v)}
-        aria-label="Switch project"
+        aria-label="Switch radar"
         aria-haspopup="menu"
         aria-expanded={isOpen}
         className={`flex size-6 items-center justify-center rounded-md text-muted transition-colors hover:bg-hover hover:text-foreground ${isOpen ? "bg-hover text-foreground" : ""}`}

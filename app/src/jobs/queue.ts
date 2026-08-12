@@ -7,10 +7,12 @@
 import type { Json } from "@/lib/database.types";
 import { adminClient } from "@/lib/supabase/server";
 
-export type QueueName = "radar" | "publish";
+export type QueueName = "radar" | "deliver";
 
 export const MAX_ATTEMPTS = 3;
 export const VISIBILITY_TIMEOUT_SECONDS = 120;
+/** Briefing scans (web search + long completion) can exceed 2 minutes. */
+export const SCAN_VISIBILITY_TIMEOUT_SECONDS = 600;
 
 export interface JobEnvelope {
   job: string;
@@ -38,10 +40,11 @@ export async function enqueueJob(
 export async function readJobBatch(
   queue: QueueName,
   batchSize: number,
+  visibilityTimeoutSeconds: number = VISIBILITY_TIMEOUT_SECONDS,
 ): Promise<QueueMessage[]> {
   const { data, error } = await adminClient().rpc("jobs_read_batch", {
     p_queue: queue,
-    p_visibility_timeout: VISIBILITY_TIMEOUT_SECONDS,
+    p_visibility_timeout: visibilityTimeoutSeconds,
     p_batch_size: batchSize,
   });
   if (error) throw error;

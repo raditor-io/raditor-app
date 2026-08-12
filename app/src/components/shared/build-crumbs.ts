@@ -3,11 +3,10 @@
  * React/Next imports so it can be unit-tested in isolation (pattern borrowed
  * from the dodi project).
  *
- * Two-level IA: at the org home (`/`, the project selection screen) the org
- * crumb rendered by the Breadcrumbs component is the leaf, so this returns no
- * crumbs. On project routes the Breadcrumbs component inserts the project
- * crumb (name via breadcrumb context, with a switcher); this module only maps
- * the section trail after it.
+ * IA: the org home (`/`) is the feeds view, so it renders no crumbs (the org
+ * crumb is the leaf). On radar routes the Breadcrumbs component inserts the
+ * radar crumb (name via breadcrumb context, with a switcher); this module
+ * only maps the section trail after it.
  */
 
 export interface Crumb {
@@ -16,11 +15,11 @@ export interface Crumb {
   href?: string;
 }
 
-/** Active project id when on a project-scoped route, else null. */
-export function activeProjectId(pathname: string): string | null {
-  const match = pathname.match(/^\/projects\/([^/]+)/);
+/** Active radar id when on a radar-scoped route, else null. */
+export function activeRadarId(pathname: string): string | null {
+  const match = pathname.match(/^\/radars\/([^/]+)/);
   const id = match?.[1];
-  return id && id !== "new" ? id : null;
+  return id ?? null;
 }
 
 export function buildCrumbs(pathname: string): Crumb[] {
@@ -28,47 +27,19 @@ export function buildCrumbs(pathname: string): Crumb[] {
   const section = seg[0];
   if (!section) return [];
 
-  if (section === "projects") {
-    const id = seg[1];
-    if (id === "new") return [{ label: "New project" }];
-    if (!id) return [];
-    // The project crumb itself comes from context; map the sub-section.
-    const sub = seg[2];
-    const base = `/projects/${id}`;
-    switch (sub) {
-      case undefined:
-        return [];
-      case "content": {
-        const crumbs: Crumb[] = [{ label: "Content", href: `${base}/content` }];
-        if (seg[3]) crumbs.push({ label: "Suggestion" });
-        return crumbs;
-      }
-      case "radar": {
-        const crumbs: Crumb[] = [{ label: "Radars", href: `${base}/radar` }];
-        if (seg[3]) crumbs.push({ label: "Radar detail" });
-        return crumbs;
-      }
-      case "editors":
-        return [{ label: "Editors", href: `${base}/editors` }];
-      case "settings":
-        return [{ label: "Settings", href: `${base}/settings` }];
-      default:
-        return [];
-    }
-  }
-
   switch (section) {
-    case "content":
-      return [{ label: "Content", href: "/content" }];
-
-    case "radar":
-      return [{ label: "Radars", href: "/radar" }];
-
-    case "editors": {
-      const crumbs: Crumb[] = [{ label: "Editors", href: "/editors" }];
-      if (seg[1] === "new") crumbs.push({ label: "New editor" });
-      else if (seg[1]) crumbs.push({ label: "…" });
+    case "feeds": {
+      const crumbs: Crumb[] = [{ label: "Feeds", href: "/" }];
+      if (seg[2] === "settings") crumbs.push({ label: "Configure" });
       return crumbs;
+    }
+
+    case "radars": {
+      // The radar crumb itself comes from context; map the tab trail.
+      if (!seg[1]) return [];
+      if (seg[2] === "signals") return [{ label: "Signals" }];
+      if (seg[2] === "settings") return [{ label: "Settings" }];
+      return [];
     }
 
     case "settings": {
