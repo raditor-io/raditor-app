@@ -1,7 +1,9 @@
 /**
  * Thin client over the pgmq wrapper functions (jobs_enqueue / jobs_read_batch
- * / jobs_archive, service-role only). Retry semantics: an unarchived message
- * reappears after the visibility timeout; the drain worker dead-letters into
+ * / jobs_archive, service-role only). Retry semantics differ per queue:
+ * radar jobs are single-attempt (the worker archives every message after its
+ * first processing, success or failure); deliver jobs retry — an unarchived
+ * message reappears after the visibility timeout and dead-letters into
  * job_failures after MAX_ATTEMPTS reads.
  */
 import type { Json } from "@/lib/database.types";
@@ -9,6 +11,7 @@ import { adminClient } from "@/lib/supabase/server";
 
 export type QueueName = "radar" | "deliver";
 
+/** Deliver queue only — scan jobs are single-attempt. */
 export const MAX_ATTEMPTS = 3;
 export const VISIBILITY_TIMEOUT_SECONDS = 120;
 /** Briefing scans (web search + long completion) can exceed 2 minutes. */

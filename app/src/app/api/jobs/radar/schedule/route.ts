@@ -30,7 +30,9 @@ async function schedule(request: NextRequest) {
     .eq("is_active", true)
     .is("deactivated_at", null)
     .limit(500);
-  const schedulableRadarIds = new Set((dueRadars ?? []).map((r) => r.id));
+  const schedulableRadars = new Map(
+    (dueRadars ?? []).map((r) => [r.id, r.last_scanned_at]),
+  );
   for (const radar of dueRadars ?? []) {
     const last = radar.last_scanned_at
       ? new Date(radar.last_scanned_at).getTime()
@@ -41,15 +43,25 @@ async function schedule(request: NextRequest) {
     }
   }
 
-  // Backstop: unconsumed inbox events whose event-triggered scan got lost.
-  // Only for schedulable radars — deactivated ones keep their inbox untouched.
+  // Backstop: unconsumed inbox events no scan attempt has seen yet (covers a
+  // lost event-triggered enqueue). Only for schedulable radars — deactivated
+  // ones keep their inbox untouched. Events older than the last attempt do
+  // NOT re-trigger — a failed scan must not reschedule itself; the next
+  // interval scan picks its events up.
   const { data: pendingEvents } = await admin
     .from("target_events")
-    .select("radar_id")
+    .select("radar_id, occurred_at")
     .is("consumed_by_scan_id", null)
     .limit(500);
   for (const row of pendingEvents ?? []) {
-    if (schedulableRadarIds.has(row.radar_id)) scanRadarIds.add(row.radar_id);
+    if (!schedulableRadars.has(row.radar_id)) continue;
+    const lastScannedAt = schedulableRadars.get(row.radar_id);
+    if (
+      !lastScannedAt ||
+      new Date(row.occurred_at).getTime() > new Date(lastScannedAt).getTime()
+    ) {
+      scanRadarIds.add(row.radar_id);
+    }
   }
 
   for (const radarId of scanRadarIds) {

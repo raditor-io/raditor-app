@@ -4,14 +4,17 @@
  * GET /api/jobs/radar/process every minute with Authorization: Bearer
  * CRON_SECRET; self-hosters point any cron at the same URL. Long maxDuration
  * via fluid compute; the loop stops with time to spare so the function never
- * gets killed mid-job.
+ * gets killed mid-job. Scan jobs are single-attempt: every message is
+ * archived after its first processing, success or failure — the scan row
+ * carries the outcome, job_failures the dead-letter log. No
+ * visibility-timeout retries (the timeout only shields in-flight scans from
+ * overlapping worker runs).
  */
 import { NextResponse, type NextRequest } from "next/server";
 
 import { registerAllJobs } from "@/jobs/handlers";
 import {
   archiveJob,
-  MAX_ATTEMPTS,
   readJobBatch,
   recordJobFailure,
   SCAN_VISIBILITY_TIMEOUT_SECONDS,
@@ -38,7 +41,6 @@ async function processQueue(request: NextRequest) {
   const startedAt = Date.now();
   let processed = 0;
   let failed = 0;
-  let deadLettered = 0;
 
   while (Date.now() - startedAt < TIME_BUDGET_MS) {
     const batch = await readJobBatch(
@@ -51,32 +53,26 @@ async function processQueue(request: NextRequest) {
     for (const message of batch) {
       try {
         await dispatch(message.envelope);
-        await archiveJob(queue, message.msgId);
         processed += 1;
       } catch (err) {
         failed += 1;
         const errorMessage = err instanceof Error ? err.message : String(err);
         console.error(
-          `[process:${queue}] job "${message.envelope.job}" failed (attempt ${message.readCount}):`,
+          `[process:${queue}] job "${message.envelope.job}" failed:`,
           errorMessage,
         );
-        if (message.readCount >= MAX_ATTEMPTS) {
-          await recordJobFailure(
-            queue,
-            message.envelope,
-            message.readCount,
-            errorMessage,
-          );
-          await archiveJob(queue, message.msgId);
-          deadLettered += 1;
-        }
-        // Otherwise: leave unarchived; it reappears after the visibility
-        // timeout for a retry.
+        await recordJobFailure(
+          queue,
+          message.envelope,
+          message.readCount,
+          errorMessage,
+        );
       }
+      await archiveJob(queue, message.msgId);
     }
   }
 
-  return NextResponse.json({ queue, processed, failed, deadLettered });
+  return NextResponse.json({ queue, processed, failed });
 }
 
 export async function GET(request: NextRequest) {

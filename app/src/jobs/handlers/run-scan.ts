@@ -3,7 +3,8 @@
  * radar pipeline. Orchestrates the enabled strategies, reconciles outputs
  * into radar-bound signals, fans them out into feeds, and always records an
  * outcome on the scan row (summary_md even for zero-signal scans,
- * error_message on failure).
+ * error_message on failure). Scans are single-attempt: last_scanned_at is
+ * stamped for every run so the scheduler paces by attempts, not successes.
  *
  * - target_emitted_events: consume the unconsumed target_events inbox
  *   (radar/strategies/target-events.ts).
@@ -83,6 +84,14 @@ async function handleRunScan(payload: {
     .single();
   if (scanError) throw scanError;
 
+  // Every scan run counts, success or failure: stamp last_scanned_at up
+  // front so the scheduler paces a failing radar by its interval instead of
+  // re-enqueuing it on every tick.
+  await admin
+    .from("radars")
+    .update({ last_scanned_at: new Date().toISOString() })
+    .eq("id", radarId);
+
   const stats = {
     events_consumed: 0,
     outputs_created: 0,
@@ -154,10 +163,6 @@ async function handleRunScan(payload: {
         finished_at: new Date().toISOString(),
       })
       .eq("id", scan.id);
-    await admin
-      .from("radars")
-      .update({ last_scanned_at: new Date().toISOString() })
-      .eq("id", radarId);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     await admin
