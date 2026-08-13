@@ -11,7 +11,9 @@ import {
   type ListColumn,
 } from "@/components/shared/list-view";
 import { RowMenu } from "@/components/shared/row-menu";
+import { dateTimeSettingsOf, formatDateTime } from "@/lib/format-date";
 import { parseListParams } from "@/lib/list-params";
+import { requireOrgContext } from "@/services/org";
 import {
   getRadar,
   listSignalKinds,
@@ -40,8 +42,9 @@ export default async function RadarSignalsPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { id } = await routeParams;
-  const radar = await getRadar(id);
+  const [radar, ctx] = await Promise.all([getRadar(id), requireOrgContext()]);
   if (!radar) notFound();
+  const dateTimeSettings = dateTimeSettingsOf(ctx.organization);
 
   const params = parseListParams(await searchParams);
   const [{ rows: signals, total }, kinds] = await Promise.all([
@@ -127,7 +130,7 @@ export default async function RadarSignalsPage({
                 </td>
                 <td className="hidden px-4 py-3 align-top md:table-cell">
                   <time className="block truncate text-xs text-faint">
-                    {new Date(signal.occurred_at).toLocaleString()}
+                    {formatDateTime(signal.occurred_at, dateTimeSettings)}
                   </time>
                 </td>
                 <td className="py-3 pl-2 pr-3 align-top">

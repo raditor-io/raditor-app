@@ -11,6 +11,7 @@ import {
   type ListColumn,
 } from "@/components/shared/list-view";
 import { RowMenu, type RowMenuItem } from "@/components/shared/row-menu";
+import { dateTimeSettingsOf, formatDateTime } from "@/lib/format-date";
 import { parseListParams } from "@/lib/list-params";
 import { requireOrgContext } from "@/services/org";
 import {
@@ -45,6 +46,7 @@ export default async function FeedPage({
 }) {
   const { id } = await routeParams;
   const ctx = await requireOrgContext();
+  const dateTimeSettings = dateTimeSettingsOf(ctx.organization);
   const feed = await getFeed(id);
   if (!feed) notFound();
 
@@ -172,7 +174,7 @@ export default async function FeedPage({
                 </td>
                 <td className="hidden px-4 py-3 align-top md:table-cell">
                   <time className="block truncate text-xs text-faint">
-                    {new Date(item.signal.occurred_at).toLocaleString()}
+                    {formatDateTime(item.signal.occurred_at, dateTimeSettings)}
                   </time>
                 </td>
                 <td className="py-3 pl-2 pr-3 align-top">

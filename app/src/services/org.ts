@@ -7,6 +7,7 @@ import type { User } from "@supabase/supabase-js";
 
 import { MemberInvitationEmail } from "@/emails/member-invitation";
 import type { Database } from "@/lib/database.types";
+import type { DateTimeSettings } from "@/lib/format-date";
 import type { MemberRole } from "@/lib/roles";
 import {
   generateInviteToken,
@@ -287,6 +288,38 @@ export async function updateModelRouting(
     actorKind: "user",
     actorId: ctx.user.id,
     payload: { routing: cleaned },
+  });
+}
+
+/** Update the org's date & time display settings (admin). */
+export async function updateDateTimeSettings(
+  settings: DateTimeSettings,
+): Promise<void> {
+  const ctx = await requireAdminContext();
+  const supabase = await serverClient();
+
+  const { error } = await supabase
+    .from("organizations")
+    .update({
+      timezone: settings.timezone,
+      date_format: settings.dateFormat,
+      time_format: settings.timeFormat,
+    })
+    .eq("id", ctx.organization.id);
+  if (error) throw error;
+
+  await recordEvent({
+    organizationId: ctx.organization.id,
+    eventType: "date_time_settings_updated",
+    subjectType: "organization",
+    subjectId: ctx.organization.id,
+    actorKind: "user",
+    actorId: ctx.user.id,
+    payload: {
+      timezone: settings.timezone,
+      date_format: settings.dateFormat,
+      time_format: settings.timeFormat,
+    },
   });
 }
 

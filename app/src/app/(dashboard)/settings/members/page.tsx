@@ -1,4 +1,5 @@
 import { InviteForm } from "@/components/settings/invite-form";
+import { dateTimeSettingsOf, formatDate } from "@/lib/format-date";
 import {
   listMembers,
   listPendingInvitations,
@@ -15,6 +16,7 @@ export const metadata = { title: "Members | Raditor" };
 
 export default async function MembersPage() {
   const ctx = await requireOrgContext();
+  const dateTimeSettings = dateTimeSettingsOf(ctx.organization);
   const [members, invitations] = await Promise.all([
     listMembers(ctx.organization.id),
     ctx.isAdmin ? listPendingInvitations(ctx.organization.id) : [],
@@ -120,7 +122,7 @@ export default async function MembersPage() {
                   </span>
                   <span className="shrink-0 text-xs text-faint">
                     expires{" "}
-                    {new Date(invitation.expires_at).toLocaleDateString()}
+                    {formatDate(invitation.expires_at, dateTimeSettings)}
                   </span>
                 </div>
                 <div className="flex shrink-0 items-center gap-4">

@@ -501,26 +501,35 @@ export type Database = {
       organizations: {
         Row: {
           created_at: string
+          date_format: string
           display_name: string
           id: string
           model_routing: Json
           slug: string
+          time_format: string
+          timezone: string
           updated_at: string
         }
         Insert: {
           created_at?: string
+          date_format?: string
           display_name: string
           id?: string
           model_routing?: Json
           slug: string
+          time_format?: string
+          timezone?: string
           updated_at?: string
         }
         Update: {
           created_at?: string
+          date_format?: string
           display_name?: string
           id?: string
           model_routing?: Json
           slug?: string
+          time_format?: string
+          timezone?: string
           updated_at?: string
         }
         Relationships: []

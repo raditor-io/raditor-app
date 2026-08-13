@@ -5,7 +5,12 @@ import { z } from "zod";
 
 import type { ActionResult } from "@/components/shared/action-form";
 import { errorMessage } from "@/lib/error-message";
-import { updateModelRouting } from "@/services/org";
+import {
+  DATE_FORMAT_IDS,
+  TIME_FORMAT_IDS,
+  isValidTimezone,
+} from "@/lib/format-date";
+import { updateDateTimeSettings, updateModelRouting } from "@/services/org";
 
 const CONFIGURABLE_FUNCTIONALITIES = ["scan_summary", "scan_briefing"] as const;
 
@@ -38,6 +43,34 @@ export async function updateModelRoutingAction(
     return {
       error:
         errorMessage(err, "Could not save model routing."),
+    };
+  }
+}
+
+const dateTimeSettingsSchema = z.object({
+  timezone: z.string().max(64).refine(isValidTimezone, "Unknown timezone"),
+  date_format: z.enum(DATE_FORMAT_IDS),
+  time_format: z.enum(TIME_FORMAT_IDS),
+});
+
+export async function updateDateTimeSettingsAction(
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const parsed = dateTimeSettingsSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: "Check the date & time fields." };
+
+  try {
+    await updateDateTimeSettings({
+      timezone: parsed.data.timezone,
+      dateFormat: parsed.data.date_format,
+      timeFormat: parsed.data.time_format,
+    });
+    revalidatePath("/settings");
+    return { notice: "Date & time settings saved." };
+  } catch (err) {
+    return {
+      error: errorMessage(err, "Could not save date & time settings."),
     };
   }
 }

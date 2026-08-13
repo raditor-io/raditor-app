@@ -16,6 +16,11 @@ import {
   type ListColumn,
 } from "@/components/shared/list-view";
 import { RowMenu } from "@/components/shared/row-menu";
+import {
+  dateTimeSettingsOf,
+  formatDateTime,
+  type DateTimeSettings,
+} from "@/lib/format-date";
 import { parseListParams } from "@/lib/list-params";
 import { requireOrgContext } from "@/services/org";
 import {
@@ -37,14 +42,17 @@ const COLUMNS: ListColumn[] = [
 
 /** Mirrors the scheduler's due rule: last scan + interval, due immediately
  * when never scanned; deactivated radars are never scheduled. */
-function nextScanLabel(radar: RadarRow): string {
+function nextScanLabel(
+  radar: RadarRow,
+  dateTimeSettings: DateTimeSettings,
+): string {
   if (radar.deactivated_at !== null) return "paused";
   const last = radar.last_scanned_at
     ? new Date(radar.last_scanned_at).getTime()
     : 0;
   const dueAt = last + radar.scan_interval_minutes * 60_000;
   if (dueAt <= Date.now()) return "due now";
-  return new Date(dueAt).toLocaleString();
+  return formatDateTime(dueAt, dateTimeSettings);
 }
 
 /** The radar list. */
@@ -54,6 +62,7 @@ export default async function RadarsPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const ctx = await requireOrgContext();
+  const dateTimeSettings = dateTimeSettingsOf(ctx.organization);
   const params = parseListParams(await searchParams);
   const { rows: radars, total } = await listRadarsPaged(params);
 
@@ -147,13 +156,13 @@ export default async function RadarsPage({
                 <td className="hidden px-4 py-3 md:table-cell">
                   <span className="block truncate text-xs text-faint">
                     {radar.last_scanned_at
-                      ? new Date(radar.last_scanned_at).toLocaleString()
+                      ? formatDateTime(radar.last_scanned_at, dateTimeSettings)
                       : "never"}
                   </span>
                 </td>
                 <td className="hidden px-4 py-3 lg:table-cell">
                   <span className="block truncate text-xs text-faint">
-                    {nextScanLabel(radar)}
+                    {nextScanLabel(radar, dateTimeSettings)}
                   </span>
                 </td>
                 <td className="py-3 pl-2 pr-3">

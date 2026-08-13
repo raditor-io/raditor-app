@@ -1,6 +1,8 @@
 import { IconBrandGithub, IconWorldSearch } from "@tabler/icons-react";
 import { notFound } from "next/navigation";
 
+import { dateTimeSettingsOf, formatDateTime } from "@/lib/format-date";
+import { requireOrgContext } from "@/services/org";
 import { getRadar, listScans, listTargets } from "@/services/radar";
 
 export const metadata = { title: "Radar | Raditor" };
@@ -11,8 +13,9 @@ export default async function RadarOverviewPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const radar = await getRadar(id);
+  const [radar, ctx] = await Promise.all([getRadar(id), requireOrgContext()]);
   if (!radar) notFound();
+  const dateTimeSettings = dateTimeSettingsOf(ctx.organization);
 
   const [targets, scans] = await Promise.all([listTargets(id), listScans(id)]);
 
@@ -35,7 +38,7 @@ export default async function RadarOverviewPage({
           <span>every {radar.scan_interval_minutes} min</span>
           <span>
             {radar.last_scanned_at
-              ? `last scanned ${new Date(radar.last_scanned_at).toLocaleString()}`
+              ? `last scanned ${formatDateTime(radar.last_scanned_at, dateTimeSettings)}`
               : "never scanned"}
           </span>
         </p>
@@ -79,7 +82,7 @@ export default async function RadarOverviewPage({
                   <div className="flex items-center justify-between gap-3">
                     <span className="min-w-0">
                       <span className="text-foreground">
-                        {new Date(scan.started_at).toLocaleString()}
+                        {formatDateTime(scan.started_at, dateTimeSettings)}
                       </span>
                       <span className="ml-2 text-xs text-faint">
                         {scan.trigger === "target_events"
