@@ -22,6 +22,7 @@ import {
   listAvailableRepos,
   listRadarsPaged,
   listTargets,
+  type RadarRow,
 } from "@/services/radar";
 
 export const metadata = { title: "Radars | Raditor" };
@@ -30,8 +31,21 @@ const COLUMNS: ListColumn[] = [
   { label: "Radar" },
   { label: "Targets", className: "hidden w-64 sm:table-cell" },
   { label: "Last scanned", className: "hidden w-52 md:table-cell" },
+  { label: "Next scan", className: "hidden w-52 lg:table-cell" },
   { label: "Actions", className: "w-14", isLabelHidden: true },
 ];
+
+/** Mirrors the scheduler's due rule: last scan + interval, due immediately
+ * when never scanned; deactivated radars are never scheduled. */
+function nextScanLabel(radar: RadarRow): string {
+  if (radar.deactivated_at !== null) return "paused";
+  const last = radar.last_scanned_at
+    ? new Date(radar.last_scanned_at).getTime()
+    : 0;
+  const dueAt = last + radar.scan_interval_minutes * 60_000;
+  if (dueAt <= Date.now()) return "due now";
+  return new Date(dueAt).toLocaleString();
+}
 
 /** The radar list. */
 export default async function RadarsPage({
@@ -133,8 +147,13 @@ export default async function RadarsPage({
                 <td className="hidden px-4 py-3 md:table-cell">
                   <span className="block truncate text-xs text-faint">
                     {radar.last_scanned_at
-                      ? `scanned ${new Date(radar.last_scanned_at).toLocaleString()}`
-                      : "never scanned"}
+                      ? new Date(radar.last_scanned_at).toLocaleString()
+                      : "never"}
+                  </span>
+                </td>
+                <td className="hidden px-4 py-3 lg:table-cell">
+                  <span className="block truncate text-xs text-faint">
+                    {nextScanLabel(radar)}
                   </span>
                 </td>
                 <td className="py-3 pl-2 pr-3">
