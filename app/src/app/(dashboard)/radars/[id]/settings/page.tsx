@@ -107,6 +107,19 @@ export default async function RadarSettingsPage({
               ))}
             </div>
           </FormFieldGroup>
+          <FormFieldGroup
+            label="Scan summary signal"
+            description="Useful for testing feeds and deliveries: every scan produces a signal, even when nothing new was found."
+          >
+            <label className="flex items-center gap-1.5 text-sm text-muted">
+              <input
+                type="checkbox"
+                name="emit_scan_summary_as_signal"
+                defaultChecked={radar.emit_scan_summary_as_signal}
+              />
+              Emit every scan summary as a signal
+            </label>
+          </FormFieldGroup>
         </ActionForm>
       </section>
 

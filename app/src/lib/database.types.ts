@@ -631,6 +631,7 @@ export type Database = {
           created_at: string
           deactivated_at: string | null
           directive_md: string
+          emit_scan_summary_as_signal: boolean
           id: string
           is_active: boolean
           last_scanned_at: string | null
@@ -645,6 +646,7 @@ export type Database = {
           created_at?: string
           deactivated_at?: string | null
           directive_md?: string
+          emit_scan_summary_as_signal?: boolean
           id?: string
           is_active?: boolean
           last_scanned_at?: string | null
@@ -659,6 +661,7 @@ export type Database = {
           created_at?: string
           deactivated_at?: string | null
           directive_md?: string
+          emit_scan_summary_as_signal?: boolean
           id?: string
           is_active?: boolean
           last_scanned_at?: string | null

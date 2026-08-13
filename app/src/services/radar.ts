@@ -130,6 +130,7 @@ export async function updateRadar(
     directive_md: string;
     scan_strategies: string[];
     scan_interval_minutes: number;
+    emit_scan_summary_as_signal: boolean;
     is_active: boolean;
   }>,
 ): Promise<void> {

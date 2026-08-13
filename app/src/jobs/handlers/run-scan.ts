@@ -23,6 +23,7 @@ import { registerJob } from "@/jobs/registry";
 import { fanOutSignalsToFeeds } from "@/feeds/fan-out";
 import { reconcileScanOutputs } from "@/radar/reconcile";
 import { buildScanSummary } from "@/radar/scan-summary";
+import { buildSummarySignalOutput } from "@/radar/summary-signal";
 import { runAiBriefing } from "@/radar/strategies/ai-briefing";
 import { consumeTargetEvents } from "@/radar/strategies/target-events";
 
@@ -139,6 +140,33 @@ async function handleRunScan(payload: {
     const signals = await reconcileScanOutputs({ radar, targetsById });
     stats.signals_created = signals.length;
     signalTitles = signals.map((signal) => signal.title);
+
+    // Meta-signal mode: emit what this scan observed as a signal of its own,
+    // through the same outputs -> reconcile path as regular findings. The
+    // summary is built BEFORE the meta-signal exists, so it describes the
+    // scan's actual findings; the final scan row summary below counts it.
+    if (radar.emit_scan_summary_as_signal) {
+      const { error: summaryError } = await admin.from("scan_outputs").upsert(
+        buildSummarySignalOutput({
+          organizationId: radar.organization_id,
+          radarId,
+          scanId: scan.id,
+          summaryMd: buildScanSummary({
+            strategiesUsed,
+            stats,
+            signalTitles,
+            briefingSummaryMd,
+            warnings,
+          }),
+          now: new Date(),
+        }),
+        { onConflict: "radar_id,external_ref", ignoreDuplicates: true },
+      );
+      if (summaryError) throw summaryError;
+      signals.push(...(await reconcileScanOutputs({ radar, targetsById })));
+      stats.signals_created = signals.length;
+      signalTitles = signals.map((signal) => signal.title);
+    }
 
     const fanOut = await fanOutSignalsToFeeds({
       organizationId: radar.organization_id,

@@ -81,6 +81,7 @@ const updateSchema = z.object({
   name: z.string().min(1).max(120),
   directive_md: z.string().min(1).max(10_000),
   scan_interval_minutes: z.coerce.number().int().min(5).max(10_080),
+  emit_scan_summary_as_signal: z.boolean(),
 });
 
 export async function updateRadarAction(
@@ -92,6 +93,8 @@ export async function updateRadarAction(
     name: formData.get("name"),
     directive_md: formData.get("directive_md"),
     scan_interval_minutes: formData.get("scan_interval_minutes"),
+    emit_scan_summary_as_signal:
+      formData.get("emit_scan_summary_as_signal") === "on",
   });
   if (!parsed.success) return { error: "Check the radar fields." };
   try {
@@ -99,6 +102,7 @@ export async function updateRadarAction(
       name: parsed.data.name,
       directive_md: parsed.data.directive_md,
       scan_interval_minutes: parsed.data.scan_interval_minutes,
+      emit_scan_summary_as_signal: parsed.data.emit_scan_summary_as_signal,
       scan_strategies: selectedStrategies(formData),
     });
     revalidatePath(`/radars/${parsed.data.radar_id}`, "layout");
