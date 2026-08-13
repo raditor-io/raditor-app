@@ -68,7 +68,7 @@ export function ActionForm({
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-md border border-border bg-surface px-3.5 py-1.5 text-sm font-medium text-foreground hover:bg-hover"
+            className="cursor-pointer rounded-md border border-border bg-surface px-3.5 py-1.5 text-sm font-medium text-foreground hover:bg-hover"
           >
             Cancel
           </button>
@@ -76,7 +76,7 @@ export function ActionForm({
         <button
           type="submit"
           disabled={isSubmitDisabled}
-          className="rounded-md border border-transparent bg-accent px-3.5 py-1.5 text-sm font-medium text-white hover:bg-accent-deep disabled:cursor-not-allowed disabled:border-border disabled:bg-hover disabled:text-faint"
+          className="cursor-pointer rounded-md border border-transparent bg-accent px-3.5 py-1.5 text-sm font-medium text-white hover:bg-accent-deep disabled:cursor-not-allowed disabled:border-border disabled:bg-hover disabled:text-faint"
         >
           {isPending ? "Saving..." : submitLabel}
         </button>

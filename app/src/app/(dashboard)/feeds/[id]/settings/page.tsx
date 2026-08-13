@@ -2,6 +2,8 @@ import { IconRadar2 } from "@tabler/icons-react";
 import { notFound } from "next/navigation";
 
 import { AddSubscriberModal } from "@/components/feeds/add-subscriber-modal";
+import { DeliveryStatus } from "@/components/feeds/delivery-status";
+import { SubscriptionRowActions } from "@/components/feeds/subscription-row-actions";
 import { ActionForm } from "@/components/shared/action-form";
 import { FormField } from "@/components/shared/form-field";
 import { INPUT_CLASSES } from "@/components/shared/form-styles";
@@ -16,9 +18,7 @@ import {
 
 import {
   attachRadarAction,
-  deleteSubscriptionAction,
   detachRadarAction,
-  setSubscriptionActiveAction,
   updateFeedAction,
 } from "../../actions";
 
@@ -222,41 +222,10 @@ export default async function FeedSettingsPage({
                       </span>
                     </span>
                     {ctx.isAdmin ? (
-                      <span className="flex shrink-0 items-center gap-2">
-                        <form action={setSubscriptionActiveAction}>
-                          <input type="hidden" name="feed_id" value={feed.id} />
-                          <input
-                            type="hidden"
-                            name="subscription_id"
-                            value={subscription.id}
-                          />
-                          <input
-                            type="hidden"
-                            name="is_active"
-                            value={subscription.isActive ? "false" : "true"}
-                          />
-                          <button
-                            type="submit"
-                            className="cursor-pointer text-xs text-muted hover:underline"
-                          >
-                            {subscription.isActive ? "Deactivate" : "Activate"}
-                          </button>
-                        </form>
-                        <form action={deleteSubscriptionAction}>
-                          <input type="hidden" name="feed_id" value={feed.id} />
-                          <input
-                            type="hidden"
-                            name="subscription_id"
-                            value={subscription.id}
-                          />
-                          <button
-                            type="submit"
-                            className="cursor-pointer text-xs text-accent-deep hover:underline"
-                          >
-                            Delete
-                          </button>
-                        </form>
-                      </span>
+                      <SubscriptionRowActions
+                        feedId={feed.id}
+                        subscription={subscription}
+                      />
                     ) : null}
                   </div>
                   {!subscription.isActive ? (
@@ -267,25 +236,25 @@ export default async function FeedSettingsPage({
                       {deliveries.map((delivery) => (
                         <li
                           key={delivery.id}
-                          className="flex items-center justify-between text-xs"
+                          className="flex items-center justify-between gap-3 text-xs"
                         >
-                          <span className="text-faint">
+                          <span
+                            className="min-w-0 truncate text-faint"
+                            title={delivery.errorMessage ?? undefined}
+                          >
                             item #{delivery.feedItemId} · attempt{" "}
                             {delivery.attemptCount}
                             {delivery.errorMessage
                               ? ` · ${delivery.errorMessage}`
                               : ""}
                           </span>
-                          <span
-                            className={
-                              delivery.status === "delivered"
-                                ? "text-success"
-                                : delivery.status === "failed"
-                                  ? "text-accent-deep"
-                                  : "text-muted"
-                            }
-                          >
-                            {delivery.status}
+                          <span className="shrink-0">
+                            <DeliveryStatus
+                              status={delivery.status}
+                              statusCode={delivery.statusCode}
+                              responseDataRaw={delivery.responseDataRaw}
+                              feedItemId={delivery.feedItemId}
+                            />
                           </span>
                         </li>
                       ))}

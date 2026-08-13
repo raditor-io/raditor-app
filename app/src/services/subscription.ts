@@ -27,6 +27,8 @@ export interface SubscriptionListRow {
   transport: string;
   webhookUrl: string | null;
   webhookMethod: string;
+  webhookAuthHeaderName: string | null;
+  webhookBodyTemplate: string | null;
   apiTokenPrefix: string | null;
   lastAckedFeedItemId: number;
   userId: string | null;
@@ -35,7 +37,7 @@ export interface SubscriptionListRow {
 }
 
 const LIST_COLUMNS =
-  "id, name, subscriber_kind, transport, webhook_url, webhook_method, api_token_prefix, last_acked_feed_item_id, user_id, is_active, created_at";
+  "id, name, subscriber_kind, transport, webhook_url, webhook_method, webhook_auth_header_name, webhook_body_template, api_token_prefix, last_acked_feed_item_id, user_id, is_active, created_at";
 
 export async function listSubscriptions(
   feedId: string,
@@ -55,6 +57,8 @@ export async function listSubscriptions(
     transport: row.transport,
     webhookUrl: row.webhook_url,
     webhookMethod: row.webhook_method,
+    webhookAuthHeaderName: row.webhook_auth_header_name,
+    webhookBodyTemplate: row.webhook_body_template,
     apiTokenPrefix: row.api_token_prefix,
     lastAckedFeedItemId: Number(row.last_acked_feed_item_id),
     userId: row.user_id,
@@ -178,6 +182,89 @@ export async function createPullSubscription(input: {
   return { subscriptionId: data.id, tokenShownOnce: token };
 }
 
+export async function updateWebhookSubscription(input: {
+  subscriptionId: string;
+  name: string;
+  webhookUrl: string;
+  method: WebhookMethod;
+  /** undefined = keep the stored header; null = remove it; object = replace. */
+  apiKey?: { headerName: string; value: string } | null;
+  /** null = standard envelope. */
+  bodyTemplate: string | null;
+}): Promise<void> {
+  const ctx = await requireAdminContext();
+
+  const validation = validateWebhookUrl(input.webhookUrl);
+  if (!validation.isValid) {
+    throw new Error(validation.reason ?? "Invalid webhook URL.");
+  }
+  if (input.apiKey && !AUTH_HEADER_NAME_PATTERN.test(input.apiKey.headerName)) {
+    throw new Error("Header name must be letters, digits, or hyphens.");
+  }
+
+  const patch: Record<string, unknown> = {
+    name: input.name,
+    webhook_url: input.webhookUrl.trim(),
+    webhook_method: input.method,
+    webhook_body_template: input.bodyTemplate,
+  };
+  if (input.apiKey === null) {
+    patch.webhook_auth_header_name = null;
+    patch.webhook_auth_secret_ciphertext = null;
+    patch.webhook_auth_secret_iv = null;
+  } else if (input.apiKey) {
+    const sealedApiKey = sealSecret(input.apiKey.value);
+    patch.webhook_auth_header_name = input.apiKey.headerName;
+    patch.webhook_auth_secret_ciphertext = sealedApiKey.ciphertext;
+    patch.webhook_auth_secret_iv = sealedApiKey.iv;
+  }
+
+  const supabase = await serverClient();
+  const { error } = await supabase
+    .from("subscriptions")
+    .update(patch)
+    .eq("id", input.subscriptionId)
+    .eq("organization_id", ctx.organization.id)
+    .eq("transport", "pushed_webhook");
+  if (error) throw error;
+
+  await recordEvent({
+    organizationId: ctx.organization.id,
+    eventType: "subscription_updated",
+    subjectType: "subscription",
+    subjectId: input.subscriptionId,
+    actorKind: "user",
+    actorId: ctx.user.id,
+    payload: { fields: Object.keys(patch) },
+  });
+}
+
+export async function updatePullSubscription(input: {
+  subscriptionId: string;
+  name: string;
+  subscriberKind: "agent" | "web_service";
+}): Promise<void> {
+  const ctx = await requireAdminContext();
+  const supabase = await serverClient();
+  const { error } = await supabase
+    .from("subscriptions")
+    .update({ name: input.name, subscriber_kind: input.subscriberKind })
+    .eq("id", input.subscriptionId)
+    .eq("organization_id", ctx.organization.id)
+    .eq("transport", "pulled_feed");
+  if (error) throw error;
+
+  await recordEvent({
+    organizationId: ctx.organization.id,
+    eventType: "subscription_updated",
+    subjectType: "subscription",
+    subjectId: input.subscriptionId,
+    actorKind: "user",
+    actorId: ctx.user.id,
+    payload: { fields: ["name", "subscriber_kind"] },
+  });
+}
+
 /** Member self-service: pin this feed as an in-app subscription. */
 export async function createInAppSubscription(feedId: string): Promise<void> {
   const ctx = await requireOrgContext();
@@ -257,9 +344,11 @@ export interface DeliveryListRow {
   id: string;
   feedItemId: number;
   status: string;
+  statusCode: number | null;
   attemptCount: number;
   lastAttemptedAt: string | null;
   errorMessage: string | null;
+  responseDataRaw: string | null;
 }
 
 export async function listDeliveries(
@@ -270,7 +359,9 @@ export async function listDeliveries(
   const supabase = await serverClient();
   const { data, error } = await supabase
     .from("feed_item_deliveries")
-    .select("id, feed_item_id, status, attempt_count, last_attempted_at, error_message")
+    .select(
+      "id, feed_item_id, status, status_code, attempt_count, last_attempted_at, error_message, response_data_raw",
+    )
     .eq("subscription_id", subscriptionId)
     .order("created_at", { ascending: false })
     .limit(limit);
@@ -279,8 +370,10 @@ export async function listDeliveries(
     id: row.id,
     feedItemId: Number(row.feed_item_id),
     status: row.status,
+    statusCode: row.status_code,
     attemptCount: row.attempt_count,
     lastAttemptedAt: row.last_attempted_at,
     errorMessage: row.error_message,
+    responseDataRaw: row.response_data_raw,
   }));
 }

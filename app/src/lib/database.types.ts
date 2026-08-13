@@ -143,7 +143,9 @@ export type Database = {
           id: string
           last_attempted_at: string | null
           organization_id: string
+          response_data_raw: string | null
           status: string
+          status_code: number | null
           subscription_id: string
         }
         Insert: {
@@ -155,7 +157,9 @@ export type Database = {
           id?: string
           last_attempted_at?: string | null
           organization_id: string
+          response_data_raw?: string | null
           status?: string
+          status_code?: number | null
           subscription_id: string
         }
         Update: {
@@ -167,7 +171,9 @@ export type Database = {
           id?: string
           last_attempted_at?: string | null
           organization_id?: string
+          response_data_raw?: string | null
           status?: string
+          status_code?: number | null
           subscription_id?: string
         }
         Relationships: [

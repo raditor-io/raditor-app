@@ -12,6 +12,10 @@ import {
   buildDeliveryPayload,
   signDeliveryHeaders,
 } from "@/feeds/delivery-payload";
+import {
+  extractResponseErrorMessage,
+  readResponseData,
+} from "@/feeds/response-capture";
 import { buildSignalEnvelope } from "@/feeds/signal-envelope";
 import { openSecret } from "@/lib/crypto/secret-box";
 import { adminClient } from "@/lib/supabase/server";
@@ -140,6 +144,9 @@ async function handleDeliverFeedItem(payload: {
 
   const abort = new AbortController();
   const timeout = setTimeout(() => abort.abort(), REQUEST_TIMEOUT_MS);
+  let isDelivered = false;
+  let statusCode: number | null = null;
+  let responseDataRaw: string | null = null;
   let errorMessage: string | null = null;
   try {
     const response = await fetch(subscription.webhook_url, {
@@ -149,8 +156,17 @@ async function handleDeliverFeedItem(payload: {
       redirect: "error",
       signal: abort.signal,
     });
-    if (!response.ok) {
-      errorMessage = `HTTP ${response.status}`;
+    statusCode = response.status;
+    isDelivered = response.ok;
+    try {
+      // Same abort window as the request; a body read failure is not a
+      // delivery failure (the destination already answered).
+      responseDataRaw = await readResponseData(response);
+    } catch {
+      responseDataRaw = null;
+    }
+    if (!isDelivered && responseDataRaw) {
+      errorMessage = extractResponseErrorMessage(responseDataRaw);
     }
   } catch (err) {
     errorMessage =
@@ -159,7 +175,7 @@ async function handleDeliverFeedItem(payload: {
     clearTimeout(timeout);
   }
 
-  if (errorMessage === null) {
+  if (isDelivered) {
     await admin
       .from("feed_item_deliveries")
       .update({
@@ -167,6 +183,8 @@ async function handleDeliverFeedItem(payload: {
         attempt_count: attemptCount,
         last_attempted_at: new Date().toISOString(),
         delivered_at: new Date().toISOString(),
+        status_code: statusCode,
+        response_data_raw: responseDataRaw,
         error_message: null,
       })
       .eq("id", deliveryId);
@@ -179,12 +197,18 @@ async function handleDeliverFeedItem(payload: {
       status: attemptCount >= MAX_ATTEMPTS ? "failed" : "pending",
       attempt_count: attemptCount,
       last_attempted_at: new Date().toISOString(),
-      error_message: errorMessage.slice(0, ERROR_MESSAGE_MAX_LENGTH),
+      status_code: statusCode,
+      response_data_raw: responseDataRaw,
+      error_message: errorMessage
+        ? errorMessage.slice(0, ERROR_MESSAGE_MAX_LENGTH)
+        : null,
     })
     .eq("id", deliveryId);
 
   throw new Error(
-    `delivery ${deliveryId} to ${subscription.webhook_url} failed: ${errorMessage}`,
+    `delivery ${deliveryId} to ${subscription.webhook_url} failed: ${
+      errorMessage ?? (statusCode === null ? "no response" : `HTTP ${statusCode}`)
+    }`,
   );
 }
 

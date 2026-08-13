@@ -12,9 +12,12 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import {
   createPullSubscriptionAction,
   createWebhookSubscriptionAction,
+  updatePullSubscriptionAction,
+  updateWebhookSubscriptionAction,
   type SubscriptionCreateResult,
 } from "@/app/(dashboard)/feeds/actions";
 import { BODY_TEMPLATE_PLACEHOLDERS } from "@/feeds/body-template";
+import { ActionForm } from "@/components/shared/action-form";
 import { FormField } from "@/components/shared/form-field";
 import { INPUT_CLASSES } from "@/components/shared/form-styles";
 
@@ -22,6 +25,19 @@ export interface CreatedSubscription {
   name: string;
   notice: string;
   secretShownOnce: string;
+}
+
+/** The non-secret subscription columns the edit forms prefill from. */
+export interface EditableSubscription {
+  id: string;
+  name: string;
+  subscriberKind: string;
+  transport: string;
+  webhookUrl: string | null;
+  webhookMethod: string;
+  webhookAuthHeaderName: string | null;
+  webhookBodyTemplate: string | null;
+  isActive: boolean;
 }
 
 export function ShowOnceSecret({ value }: { value: string }) {
@@ -96,7 +112,17 @@ function useCreatedCallback(
 }
 
 type WebhookAuthType = "none" | "basic" | "bearer" | "custom";
+/** Edit adds "keep": leave the stored auth header untouched. */
+type WebhookAuthChoice = WebhookAuthType | "keep";
 type WebhookFormTab = "auth" | "body";
+
+interface WebhookFieldDefaults {
+  name: string;
+  webhookUrl: string;
+  webhookMethod: string;
+  authHeaderName: string | null;
+  bodyTemplate: string | null;
+}
 
 function FormTabButton({
   label,
@@ -124,19 +150,20 @@ function FormTabButton({
   );
 }
 
-export function CreateWebhookSubscriptionForm({
-  feedId,
-  onCreated,
+/**
+ * The shared webhook subscription fields (create and edit). With defaults
+ * (edit), the auth select grows a "keep" mode because the stored header
+ * value is sealed and cannot be prefilled.
+ */
+function WebhookSubscriptionFields({
+  defaults,
 }: {
-  feedId: string;
-  onCreated?: (created: CreatedSubscription) => void;
+  defaults?: WebhookFieldDefaults;
 }) {
-  const [state, formAction, isPending] = useActionState<
-    SubscriptionCreateResult,
-    FormData
-  >(createWebhookSubscriptionAction, {});
-  useCreatedCallback(state, onCreated);
-  const [authType, setAuthType] = useState<WebhookAuthType>("none");
+  const storedAuthHeaderName = defaults?.authHeaderName ?? null;
+  const [authType, setAuthType] = useState<WebhookAuthChoice>(
+    storedAuthHeaderName ? "keep" : "none",
+  );
   const [activeTab, setActiveTab] = useState<WebhookFormTab>("auth");
   const bodyTemplateRef = useRef<HTMLTextAreaElement>(null);
 
@@ -150,13 +177,13 @@ export function CreateWebhookSubscriptionForm({
   }
 
   return (
-    <form action={formAction} className="space-y-3">
-      <input type="hidden" name="feed_id" value={feedId} />
+    <>
       <FormField label="Name">
         <input
           name="name"
           required
           maxLength={120}
+          defaultValue={defaults?.name}
           className={INPUT_CLASSES}
           placeholder="Pricing API"
         />
@@ -167,7 +194,7 @@ export function CreateWebhookSubscriptionForm({
               against w-auto, so the select gets explicit sizing. */}
           <select
             name="webhook_method"
-            defaultValue="POST"
+            defaultValue={defaults?.webhookMethod ?? "POST"}
             aria-label="Delivery method"
             className="w-[104px] shrink-0 cursor-pointer rounded-md border border-border bg-surface px-2 py-2 font-mono text-sm text-foreground transition-shadow focus:border-border-strong focus:outline-none focus:ring-4 focus:ring-foreground/5"
           >
@@ -183,6 +210,7 @@ export function CreateWebhookSubscriptionForm({
             name="webhook_url"
             required
             type="url"
+            defaultValue={defaults?.webhookUrl}
             className={`${INPUT_CLASSES} min-w-0 flex-1`}
             placeholder="https://api.example.com/hooks/raditor"
           />
@@ -212,10 +240,17 @@ export function CreateWebhookSubscriptionForm({
           <select
             name="auth_type"
             value={authType}
-            onChange={(e) => setAuthType(e.target.value as WebhookAuthType)}
+            onChange={(e) => setAuthType(e.target.value as WebhookAuthChoice)}
             className={INPUT_CLASSES}
           >
-            <option value="none">None</option>
+            {storedAuthHeaderName ? (
+              <option value="keep">
+                Keep current ({storedAuthHeaderName})
+              </option>
+            ) : null}
+            <option value="none">
+              {storedAuthHeaderName ? "None (remove current)" : "None"}
+            </option>
             <option value="basic">Basic auth</option>
             <option value="bearer">Bearer token</option>
             <option value="custom">Custom</option>
@@ -309,11 +344,33 @@ export function CreateWebhookSubscriptionForm({
             name="body_template"
             rows={6}
             maxLength={20000}
+            defaultValue={defaults?.bodyTemplate ?? ""}
             className={`${INPUT_CLASSES} font-mono text-xs`}
             placeholder={`{"from":"Raditor <signals@yourdomain.com>","to":["you@acme.com"],"subject":"{{signal.title}}","text":"{{signal.summary_md}}"}`}
           />
         </FormField>
       </div>
+    </>
+  );
+}
+
+export function CreateWebhookSubscriptionForm({
+  feedId,
+  onCreated,
+}: {
+  feedId: string;
+  onCreated?: (created: CreatedSubscription) => void;
+}) {
+  const [state, formAction, isPending] = useActionState<
+    SubscriptionCreateResult,
+    FormData
+  >(createWebhookSubscriptionAction, {});
+  useCreatedCallback(state, onCreated);
+
+  return (
+    <form action={formAction} className="space-y-3">
+      <input type="hidden" name="feed_id" value={feedId} />
+      <WebhookSubscriptionFields />
       {state.error ? (
         <p className="text-sm text-accent-deep">{state.error}</p>
       ) : null}
@@ -325,6 +382,80 @@ export function CreateWebhookSubscriptionForm({
       ) : null}
       <SubmitButton label="Add subscriber" isPending={isPending} />
     </form>
+  );
+}
+
+export function EditWebhookSubscriptionForm({
+  feedId,
+  subscription,
+  onSaved,
+  onCancel,
+}: {
+  feedId: string;
+  subscription: EditableSubscription;
+  onSaved?: () => void;
+  onCancel?: () => void;
+}) {
+  return (
+    <ActionForm
+      action={updateWebhookSubscriptionAction}
+      onSuccess={onSaved}
+      onCancel={onCancel}
+    >
+      <input type="hidden" name="feed_id" value={feedId} />
+      <input type="hidden" name="subscription_id" value={subscription.id} />
+      <WebhookSubscriptionFields
+        defaults={{
+          name: subscription.name,
+          webhookUrl: subscription.webhookUrl ?? "",
+          webhookMethod: subscription.webhookMethod,
+          authHeaderName: subscription.webhookAuthHeaderName,
+          bodyTemplate: subscription.webhookBodyTemplate,
+        }}
+      />
+    </ActionForm>
+  );
+}
+
+export function EditPullSubscriptionForm({
+  feedId,
+  subscription,
+  onSaved,
+  onCancel,
+}: {
+  feedId: string;
+  subscription: EditableSubscription;
+  onSaved?: () => void;
+  onCancel?: () => void;
+}) {
+  return (
+    <ActionForm
+      action={updatePullSubscriptionAction}
+      onSuccess={onSaved}
+      onCancel={onCancel}
+    >
+      <input type="hidden" name="feed_id" value={feedId} />
+      <input type="hidden" name="subscription_id" value={subscription.id} />
+      <FormField label="Name">
+        <input
+          name="name"
+          required
+          maxLength={120}
+          defaultValue={subscription.name}
+          className={INPUT_CLASSES}
+        />
+      </FormField>
+      <FormField label="Subscriber kind">
+        <select
+          name="subscriber_kind"
+          defaultValue={subscription.subscriberKind}
+          className={INPUT_CLASSES}
+        >
+          <option value="agent">Agent (polls the feed)</option>
+          <option value="web_service">Web service (polls the feed)</option>
+        </select>
+      </FormField>
+    </ActionForm>
   );
 }
 

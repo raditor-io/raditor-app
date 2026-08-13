@@ -21,6 +21,8 @@ import {
   deleteSubscription,
   removeInAppSubscription,
   setSubscriptionActive,
+  updatePullSubscription,
+  updateWebhookSubscription,
 } from "@/services/subscription";
 
 const createFeedSchema = z.object({
@@ -131,8 +133,7 @@ export interface SubscriptionCreateResult extends ActionResult {
   createdName?: string;
 }
 
-const createWebhookSubscriptionSchema = z.object({
-  feed_id: z.uuid(),
+const webhookFieldSchemas = {
   name: z.string().min(1).max(120),
   webhook_url: z.string().min(1).max(2_000),
   webhook_method: z.enum([
@@ -144,18 +145,40 @@ const createWebhookSubscriptionSchema = z.object({
     "DELETE",
     "OPTIONS",
   ]),
-  auth_type: z.enum(["none", "basic", "bearer", "custom"]),
   auth_username: z.string().max(200),
   auth_password: z.string().max(200),
   auth_token: z.string().max(2_000),
   auth_header_name: z.string().max(64),
   auth_header_value: z.string().max(2_000),
   body_template: z.string().max(20_000),
+};
+
+const createWebhookSubscriptionSchema = z.object({
+  feed_id: z.uuid(),
+  auth_type: z.enum(["none", "basic", "bearer", "custom"]),
+  ...webhookFieldSchemas,
 });
+
+/** The edit form's extra auth mode: leave the stored header untouched. */
+const updateWebhookSubscriptionSchema = z.object({
+  feed_id: z.uuid(),
+  subscription_id: z.uuid(),
+  auth_type: z.enum(["keep", "none", "basic", "bearer", "custom"]),
+  ...webhookFieldSchemas,
+});
+
+interface WebhookAuthFormFields {
+  auth_type: "none" | "basic" | "bearer" | "custom";
+  auth_username: string;
+  auth_password: string;
+  auth_token: string;
+  auth_header_name: string;
+  auth_header_value: string;
+}
 
 /** httpie-style auth composition: the form holds raw parts, the header is built here. */
 function composeAuthHeader(
-  data: z.infer<typeof createWebhookSubscriptionSchema>,
+  data: WebhookAuthFormFields,
 ): { headerName: string; value: string } | { error: string } | undefined {
   switch (data.auth_type) {
     case "none":
@@ -227,6 +250,54 @@ export async function createWebhookSubscriptionAction(
   }
 }
 
+export async function updateWebhookSubscriptionAction(
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const parsed = updateWebhookSubscriptionSchema.safeParse({
+    feed_id: formData.get("feed_id"),
+    subscription_id: formData.get("subscription_id"),
+    name: formData.get("name"),
+    webhook_url: formData.get("webhook_url"),
+    webhook_method: formData.get("webhook_method") ?? "POST",
+    auth_type: formData.get("auth_type") ?? "keep",
+    auth_username: formData.get("auth_username") ?? "",
+    auth_password: formData.get("auth_password") ?? "",
+    auth_token: formData.get("auth_token") ?? "",
+    auth_header_name: formData.get("auth_header_name") ?? "",
+    auth_header_value: formData.get("auth_header_value") ?? "",
+    body_template: formData.get("body_template") ?? "",
+  });
+  if (!parsed.success) {
+    return { error: "Give the subscription a name and an https URL." };
+  }
+  let apiKey: { headerName: string; value: string } | null | undefined;
+  if (parsed.data.auth_type === "keep") {
+    apiKey = undefined;
+  } else {
+    const composed = composeAuthHeader({
+      ...parsed.data,
+      auth_type: parsed.data.auth_type,
+    });
+    if (composed && "error" in composed) return { error: composed.error };
+    apiKey = composed ?? null;
+  }
+  try {
+    await updateWebhookSubscription({
+      subscriptionId: parsed.data.subscription_id,
+      name: parsed.data.name,
+      webhookUrl: parsed.data.webhook_url,
+      method: parsed.data.webhook_method,
+      apiKey,
+      bodyTemplate: parsed.data.body_template.trim() || null,
+    });
+    revalidatePath(`/feeds/${parsed.data.feed_id}/settings`);
+    return { notice: "Subscription saved." };
+  } catch (err) {
+    return { error: errorMessage(err, "Could not save the subscription.") };
+  }
+}
+
 const createPullSubscriptionSchema = z.object({
   feed_id: z.uuid(),
   name: z.string().min(1).max(120),
@@ -255,6 +326,34 @@ export async function createPullSubscriptionAction(
     };
   } catch (err) {
     return { error: errorMessage(err, "Could not create the subscription.") };
+  }
+}
+
+const updatePullSubscriptionSchema = z.object({
+  feed_id: z.uuid(),
+  subscription_id: z.uuid(),
+  name: z.string().min(1).max(120),
+  subscriber_kind: z.enum(["agent", "web_service"]),
+});
+
+export async function updatePullSubscriptionAction(
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const parsed = updatePullSubscriptionSchema.safeParse(
+    Object.fromEntries(formData),
+  );
+  if (!parsed.success) return { error: "Give the subscription a name." };
+  try {
+    await updatePullSubscription({
+      subscriptionId: parsed.data.subscription_id,
+      name: parsed.data.name,
+      subscriberKind: parsed.data.subscriber_kind,
+    });
+    revalidatePath(`/feeds/${parsed.data.feed_id}/settings`);
+    return { notice: "Subscription saved." };
+  } catch (err) {
+    return { error: errorMessage(err, "Could not save the subscription.") };
   }
 }
 
